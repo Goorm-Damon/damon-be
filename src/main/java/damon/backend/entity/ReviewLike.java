@@ -34,7 +34,7 @@ public class ReviewLike {
     //멤버id 매핑
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
-    private Member member;
+    private User user;
 
     //연관관계 매핑 메서드
     public void addReview(Review review) {
@@ -44,10 +44,10 @@ public class ReviewLike {
         }
     }
 
-    public void addMember(Member member){
-        this.member = member;
-        if (member != null ) {
-            member.getReviewLikes().add(this);
+    public void addMember(User user){
+        this.user = user;
+        if (user != null ) {
+            user.getReviewLikes().add(this);
         }
     }
 }

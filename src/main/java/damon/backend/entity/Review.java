@@ -51,7 +51,7 @@ public class Review {
     //멤버id 매핑
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
-    private Member member;
+    private User user;
 
     //리뷰이미지 매핑
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -66,10 +66,10 @@ public class Review {
     private List<ReviewComment> reviewComments = new ArrayList<>();
 
     //연관관계 매핑 메서드
-    public void setMember(Member member){
-        this.member = member;
-        if (member != null) {
-            member.getReviews().add(this);
+    public void setMember(User user){
+        this.user = user;
+        if (user != null) {
+            user.getReviews().add(this);
         }
     }
 

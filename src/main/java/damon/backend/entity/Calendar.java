@@ -22,7 +22,7 @@ public class Calendar{
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
-    private Member member;
+    private User user;
 
 
     private String title;
@@ -38,8 +38,8 @@ public class Calendar{
     private List<Travel> travels = new ArrayList<>();
 
     @Builder
-    public Calendar(Member member, String title, LocalDate startDate, LocalDate endDate, Area area) {
-        this.member = member;
+    public Calendar(User user, String title, LocalDate startDate, LocalDate endDate, Area area) {
+        this.user = user;
         this.title = title;
         this.startDate = startDate;
         this.endDate = endDate;
