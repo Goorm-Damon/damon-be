@@ -2,12 +2,14 @@ package damon.backend.dto.response;
 
 import damon.backend.entity.Area;
 import damon.backend.entity.Review;
+import damon.backend.entity.ReviewImage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @AllArgsConstructor
@@ -27,6 +29,7 @@ public class ReviewResponse {
     private Long cost;
     private List<String> suggests;
     private List<String> freeTags;
+    private List<String> imageUrls;
 
     private String content;
 
@@ -46,6 +49,11 @@ public class ReviewResponse {
             state = "편집됨";
         }
 
+        // 이미지 리스트 가져오기
+        List<String> imageUrls = review.getReviewImages().stream()
+                .map(ReviewImage::getUrl)
+                .collect(Collectors.toList());
+
         return new ReviewResponse(
 
                 review.getId(),
@@ -60,7 +68,7 @@ public class ReviewResponse {
                 review.getCost(),
                 review.getSuggests(),
                 review.getFreeTags(),
-//                imageUrls,
+                imageUrls,
                 review.getContent(),
                 organizedComments // 계층적으로 구조화된 댓글 목록
         );
