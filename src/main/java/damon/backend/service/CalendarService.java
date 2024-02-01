@@ -2,8 +2,6 @@ package damon.backend.service;
 
 import damon.backend.dto.request.CalendarCreateRequestDto;
 import damon.backend.dto.request.CalendarEditRequestDto;
-import damon.backend.dto.request.CalendarsDeleteRequestDto;
-import damon.backend.dto.request.TravelEditRequestDto;
 import damon.backend.dto.response.CalendarCreateResponseDto;
 import damon.backend.dto.response.CalendarEditResponseDto;
 import damon.backend.dto.response.CalendarResponseDto;
@@ -15,7 +13,6 @@ import damon.backend.repository.CalendarRepository;
 import damon.backend.repository.MemberRepository;
 import damon.backend.repository.TravelRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,12 +20,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
 public class CalendarService {
     private final CalendarRepository calendarRepository;
@@ -85,7 +79,7 @@ public class CalendarService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate"));
-        Page<Calendar> calendarPage = calendarRepository.findPageByMember(member.getId(), pageable);
+        Page<Calendar> calendarPage = calendarRepository.findByMember(member, pageable);
 
         return calendarPage.map(CalendarsResponseDto::from);
     }
@@ -101,7 +95,7 @@ public class CalendarService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
 
-        Calendar calendar = calendarRepository.findByIdWithTravel(calendarId)
+        Calendar calendar = calendarRepository.findById(calendarId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 일정을 찾을 수 없습니다."));
 
         if (!calendar.getMember().getId().equals(member.getId())) {
@@ -122,7 +116,7 @@ public class CalendarService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
 
-        Calendar calendar = calendarRepository.findByIdWithTravel(calendarId)
+        Calendar calendar = calendarRepository.findById(calendarId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 일정을 찾을 수 없습니다."));
 
         if (!calendar.getMember().getId().equals(member.getId())) {
@@ -140,29 +134,29 @@ public class CalendarService {
                 .ifPresent(travelEditRequestDto -> travel.update(travelEditRequestDto.getLocationName(), travelEditRequestDto.getLatitude(), travelEditRequestDto.getLongitude(), travelEditRequestDto.getMemo(), travelEditRequestDto.getDay(), travelEditRequestDto.getOrder())));
 
         // 새로운 여행지 추가 로직
-        List<Travel> newTravels = requestDto.getTravels().stream()
+        requestDto.getTravels().stream()
                 .filter(travelEditRequestDto -> travelEditRequestDto.getTravelId() == null)
-                .map(travelEditRequestDto -> Travel.builder()
-                        .calendar(calendar) // 여행지와 일정 연결
-                        .locationName(travelEditRequestDto.getLocationName())
-                        .latitude(travelEditRequestDto.getLatitude())
-                        .longitude(travelEditRequestDto.getLongitude())
-                        .memo(travelEditRequestDto.getMemo())
-                        .travelDay(travelEditRequestDto.getDay()) // orderNum 순서를 어떻게 관리 할 것인가? => day로 관리
-                        .build())
-                .collect(Collectors.toList());
-
-        travelRepository.saveAll(newTravels);
+                .forEach(travelEditRequestDto -> {
+                    Travel newTravel = Travel.builder()
+                            .calendar(calendar) // 여행지와 일정 연결
+                            .locationName(travelEditRequestDto.getLocationName())
+                            .latitude(travelEditRequestDto.getLatitude())
+                            .longitude(travelEditRequestDto.getLongitude())
+                            .memo(travelEditRequestDto.getMemo())
+                            .travelDay(travelEditRequestDto.getDay()) // orderNum 순서를 어떻게 관리 할 것인가? => day로 관리
+                            .build();
+                    // 생명 주기를 수동으로 관리하기 위해 여행지를 저장할 때마다 일정 글에도 저장(추후에 cascade를 고려합니다.)
+                    travelRepository.save(newTravel);
+                });
 
         // 삭제된 여행지 로직 처리
-        List<Long> deletedTravles = requestDto.getTravels().stream()
+        requestDto.getTravels().stream()
                 .filter(travelEditRequestDto -> travelEditRequestDto.getTravelId() != null && travelEditRequestDto.isDeleted())
-                .map(TravelEditRequestDto::getTravelId)
-                .collect(Collectors.toList());
-
-        if(!deletedTravles.isEmpty()) {
-            travelRepository.deleteAllByIdIn(deletedTravles);
-        }
+                .forEach(travelEditRequestDto -> {
+                    Travel travel = travelRepository.findById(travelEditRequestDto.getTravelId())
+                            .orElseThrow(() -> new IllegalArgumentException("해당 여행지를 찾을 수 없습니다."));
+                    travelRepository.delete(travel);
+                });
 
         return CalendarEditResponseDto.from(calendarId);
     }
@@ -185,24 +179,5 @@ public class CalendarService {
         }
         // cascde로 삭제합니다.
         calendarRepository.delete(calendar);
-    }
-
-    /**
-     * 일정 글을 선택 삭제합니다.
-     * @param memberId : 해당 멤버의 아이디
-     * @param requestDto : 선택 삭제할 일정 글의 아이디
-     */
-    @Transactional
-    public void deleteCalendars(String memberId, CalendarsDeleteRequestDto requestDto) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
-
-        List<Calendar> calendars = calendarRepository.findAllById(requestDto.getCalendarIds());
-
-        if(calendars.size() != requestDto.getCalendarIds().size()) {
-            throw new IllegalArgumentException("요청된 일정 중 일부가 존재하지 않습니다.");
-        }
-
-        calendarRepository.deleteAllByIn(requestDto.getCalendarIds());
     }
 }

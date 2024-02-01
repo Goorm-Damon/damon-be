@@ -2,7 +2,6 @@ package damon.backend.controller;
 
 import damon.backend.dto.request.CalendarCreateRequestDto;
 import damon.backend.dto.request.CalendarEditRequestDto;
-import damon.backend.dto.request.CalendarsDeleteRequestDto;
 import damon.backend.dto.response.CalendarCreateResponseDto;
 import damon.backend.dto.response.CalendarEditResponseDto;
 import damon.backend.dto.response.CalendarResponseDto;
@@ -70,8 +69,7 @@ public class CalendarController {
             @Schema(description = "수정 할 일정 상세 페이지 ID", example="1")
             @PathVariable("calendarId") Long calendarId,
 
-            @RequestBody CalendarEditRequestDto calendarEditRequestDto
-    ) {
+            @RequestBody CalendarEditRequestDto calendarEditRequestDto) {
         // 로그인 구현 후 member Id 추후 수정
         String memberId = "1";
         return calendarService.updateCalendar(memberId, calendarId, calendarEditRequestDto);
@@ -87,16 +85,5 @@ public class CalendarController {
         // 로그인 구현 후 member Id 추후 수정
         String memberId = "1";
         calendarService.deleteCalendar(memberId, calendarId);
-    }
-
-    @Operation(summary = "내 일정 선택 삭제", description = "내 일정을 선택 삭제합니다.")
-    @ApiResponse(responseCode = "200", description = "일정 선택 삭제 성공")
-    @DeleteMapping("/calendar")
-    public void deleteCalendars(
-            @RequestBody CalendarsDeleteRequestDto calendarsDeleteRequestDto
-    ) {
-        // 로그인 구현 후 member Id 추후 수정
-        String memberId = "1";
-        calendarService.deleteCalendars(memberId, calendarsDeleteRequestDto);
     }
 }
