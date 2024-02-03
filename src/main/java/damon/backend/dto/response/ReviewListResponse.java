@@ -5,6 +5,7 @@ import damon.backend.entity.Review;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -14,7 +15,7 @@ public class ReviewListResponse {
 
     private Long id;
     private Area area;
-    private ZonedDateTime createTime;
+    private LocalDateTime createdDate;
     //private String state;
 
     private String title;
@@ -39,7 +40,7 @@ public class ReviewListResponse {
 
                 review.getId(),
                 review.getArea(),
-                review.getCreateTime(),
+                review.getCreatedDate(),
                 review.getTitle(),
                 review.getCost(),
                 review.getSuggests(),

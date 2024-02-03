@@ -20,7 +20,7 @@ import java.util.Optional;
 @Tag(name = "리뷰 API", description = "리뷰 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/review")
+@RequestMapping("/api/review")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class ReviewController {
     private final ReviewService reviewService;
@@ -66,25 +66,27 @@ public class ReviewController {
     }
 
     //게시글 수정
+//    @PreAuthorize("#providerName == authentication.principal.providername")
     @PutMapping("/{reviewId}")
     @Operation(summary = "내 리뷰 수정", description = "내 리뷰를 수정합니다.")
     @ApiResponse(responseCode = "200", description = "리뷰 수정 성공")
     public ResponseEntity<ReviewResponse> updateReview(
             @Schema(description = "리뷰 인덱스", example="1")
             @PathVariable Long reviewId,
-            @RequestBody ReviewRequest reviewRequest){
+            @RequestBody ReviewRequest reviewRequest){ // @AuthenticationPrincipal CustomOAuth2User customOAuth2User 추후에 추가
         ReviewResponse updatedReview = reviewService.updateReview(reviewId, reviewRequest); //memberId 추후에 추가
         return ResponseEntity.ok(updatedReview);
     }
 
     //게시글 삭제
+//    @PreAuthorize("#providerName == authentication.principal.providername")
     @DeleteMapping("/{reviewId}")
     @Operation(summary = "내 리뷰 삭제", description = "내 리뷰를 삭제합니다.")
     @ApiResponse(responseCode = "200", description = "리뷰 등록 삭제")
     public ResponseEntity<Void> deleteReview(
             @Schema(description = "리뷰 인덱스", example="1")
             @PathVariable Long reviewId
-    ) {
+    ) { // @AuthenticationPrincipal CustomOAuth2User customOAuth2User 추후에 추가
         reviewService.deleteReview(reviewId); // memberId 추가
         return ResponseEntity.ok().build(); // HTTP 200 OK 응답
     }

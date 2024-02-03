@@ -32,7 +32,7 @@ public class ReviewService {
     private final ReviewCommentRepository reviewCommentRepository;
 
     //게시글 등록
-    public ReviewResponse postReview(ReviewRequest request) {
+    public ReviewResponse postReview(ReviewRequest request, String providerName) {
         Review review = new Review();
         review.setTitle(request.getTitle());
         review.setStartDate(request.getStartDate());
@@ -43,6 +43,7 @@ public class ReviewService {
         review.setFreeTags(request.getFreeTags());
         review.setContent(request.getContent());
         review = reviewRepository.save(review); // 리뷰 저장
+
 
         List<ReviewCommentResponse> emptyCommentsList = new ArrayList<>(); // 새 리뷰에는 댓글이 없으므로 빈 리스트 생성
         return ReviewResponse.from(review, emptyCommentsList); // 저장된 리뷰와 빈 댓글 목록을 전달
@@ -68,7 +69,7 @@ public class ReviewService {
 
     //게시글 상세 내용 조회 (댓글 포함)
     @Transactional(readOnly = true)
-    public ReviewResponse searchReview(Long reviewId) {
+    public ReviewResponse searchReview(Long reviewId, String providerName) {
         Review review = reviewRepository.findReviewWithCommentsAndRepliesByReviewId(reviewId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 리뷰입니다"));
 
@@ -89,36 +90,6 @@ public class ReviewService {
 
     }
 
-
-    // 댓글, 대댓글 계층적 구조 생성
-    public List<ReviewCommentResponse> organizeCommentStructure(Long reviewId) {
-        List<ReviewComment> allComments = reviewCommentRepository.findByReviewIdOrderByCreateTimeAsc(reviewId);
-        Map<Long, ReviewCommentResponse> commentResponseMap = new HashMap<>();
-        List<ReviewCommentResponse> topLevelComments = new ArrayList<>();
-
-        // 모든 댓글을 Response 객체로 변환하고, Map에 저장 (ID를 키로 사용)
-        for (ReviewComment comment : allComments) {
-            ReviewCommentResponse commentResponse = ReviewCommentResponse.from(comment);
-            commentResponseMap.put(comment.getId(), commentResponse);
-            if (comment.getParent() == null) { // 부모 댓글일 경우
-                topLevelComments.add(commentResponse);
-            }
-        }
-
-        // 대댓글을 부모 댓글의 replies 목록에 추가
-        for (ReviewComment comment : allComments) {
-            if (comment.getParent() != null) { // 대댓글일 경우
-                ReviewCommentResponse childCommentResponse = commentResponseMap.get(comment.getId());
-                ReviewCommentResponse parentCommentResponse = commentResponseMap.get(comment.getParent().getId());
-                if (parentCommentResponse != null && !parentCommentResponse.getReplies().contains(childCommentResponse)) {
-                    parentCommentResponse.getReplies().add(childCommentResponse);
-                }
-            }
-        }
-
-        return topLevelComments;
-    }
-
     // 조회수 증가 메소드
     private void incrementReviewViewCount(Review review) {
         review.setViewCount(review.getViewCount() + 1);
@@ -126,7 +97,7 @@ public class ReviewService {
     }
 
     // 게시글 수정
-    public ReviewResponse updateReview(Long reviewId, ReviewRequest request) {
+    public ReviewResponse updateReview(Long reviewId, ReviewRequest request, String providerName) {
 //        Long memberId = SecurityUtils.getCurrentUserId();
 //        if (memberId == null || !isAuthor(reviewId, memberId)) {
 //            throw new RuntimeException("Unauthorized access");
@@ -157,7 +128,7 @@ public class ReviewService {
     }
 
     //게시글 삭제
-    public void deleteReview(Long reviewId) {
+    public void deleteReview(Long reviewId, String providerName) {
 //        Long memberId = SecurityUtils.getCurrentUserId();
 //        if (memberId == null || !isAuthor(reviewId, memberId)) {
 //            throw new RuntimeException("Unauthorized access");

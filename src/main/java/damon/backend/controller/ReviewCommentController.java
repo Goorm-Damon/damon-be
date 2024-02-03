@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "리뷰 댓글 API", description = "리뷰 댓글 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/review")
+@RequestMapping("/api/review")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class ReviewCommentController {
     private final ReviewCommentService reviewCommentService;
@@ -32,6 +32,7 @@ public class ReviewCommentController {
 
 
     // 댓글 수정
+//    @PreAuthorize("#providerName == authentication.principal.providername")
     @PatchMapping("/{reviewId}/comments/{commentId}")
     @Operation(summary = "내 댓글 수정", description = "내 댓글을 수정합니다.")
     @ApiResponse(responseCode = "200", description = "댓글 수정 성공")
@@ -40,7 +41,7 @@ public class ReviewCommentController {
             @PathVariable Long reviewId,
             @Schema(description = "댓글 인덱스", example="1")
             @PathVariable Long commentId,
-            @RequestBody ReviewCommentRequest request) {
+            @RequestBody ReviewCommentRequest request) { // @AuthenticationPrincipal CustomOAuth2User customOAuth2User 추후에 추가
 
         if (request.getContent() != null && !request.getContent().trim().isEmpty()) {
             ReviewResponse updatedReview = reviewCommentService.updateComment(commentId, request);
@@ -51,13 +52,14 @@ public class ReviewCommentController {
        }
 
     // 댓글 삭제
+//    @PreAuthorize("#providerName == authentication.principal.providername")
     @DeleteMapping("/{reviewId}/comments/{commentId}")
     @Operation(summary = "내 댓글 삭제", description = "내 댓글을 삭제합니다.")
     @ApiResponse(responseCode = "200", description = "댓글 삭제 성공")
     public ResponseEntity<Void> deleteComment(
             @Schema(description = "댓글 인덱스", example="1")
             @PathVariable Long commentId
-    ) { //@RequestParam Long memberId 추후에 추가
+    ) { // @AuthenticationPrincipal CustomOAuth2User customOAuth2User 추후에 추가
         reviewCommentService.deleteComment(commentId);
         return ResponseEntity.ok().build(); // HTTP 200 OK 응답
     }

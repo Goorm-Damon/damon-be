@@ -10,8 +10,6 @@ import java.util.List;
 @Repository
 public interface ReviewCommentRepository extends JpaRepository<ReviewComment, Long> {
 
-    List<ReviewComment> findByReviewIdOrderByCreateTimeAsc(Long reviewId);
-
     // 특정 리뷰에 대한 모든 댓글 조회
     @Query("SELECT c FROM ReviewComment c WHERE c.review.id = :reviewId")
     List<ReviewComment> findByReviewId(Long reviewId);

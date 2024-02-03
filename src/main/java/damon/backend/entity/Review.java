@@ -1,50 +1,28 @@
 package damon.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Getter @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class Review {
-    //not null 이 너무 많아서 기본값을 not null로 설정
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
-    public @interface NotNull {
-        boolean nullable() default false;
-    }
+@Getter
+@Table(name = "review")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Review extends BaseEntity{
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="review_id")
     private Long id;
-    private ZonedDateTime createTime;
-    private ZonedDateTime updateTime;
-
-    @PrePersist
-    protected void onCreate() {
-        createTime = ZonedDateTime.now();
-        updateTime = createTime; // 생성 시 updateTime도 초기화
-    }
 
     private long viewCount;
+    private boolean isEdited = false; // 변경 여부를 추적하는 필드
 
     private String title;
     private LocalDate startDate;
     private LocalDate endDate;
-
 
     @Enumerated(EnumType.STRING)
     private Area area;
@@ -55,7 +33,7 @@ public class Review {
     private List<String> suggests = new ArrayList<>();
 
     @ElementCollection
-    @Column(nullable = true)
+    @Column
     private List<String> freeTags = new ArrayList<>();
 
     @Column(columnDefinition = "TEXT")
@@ -85,5 +63,9 @@ public class Review {
             member.getReviews().add(this);
         }
     }
-
+    // 내용 변경 시, isEdited를 true로 설정
+    public void updateContent(String newContent) {
+        this.content = newContent;
+        this.isEdited = true;
+    }
 }

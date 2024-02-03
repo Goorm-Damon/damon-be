@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -15,7 +15,7 @@ public class ReviewResponse {
 
     private Long id;
 
-    private ZonedDateTime createTime;
+    private LocalDateTime createdDate;
     private String state;
     private long likeCount; // 좋아요 수
     private long viewCount; // 조회수
@@ -39,17 +39,12 @@ public class ReviewResponse {
         long likeCount = review.getReviewLikes().size();
         long viewCount = review.getViewCount(); // 조회수
 
-        String state = ""; // 초기 상태값은 빈 문자열로 설정
-
-        // updateTime이 null이 아니고, createTime과 updateTime이 다를 때 state를 "편집됨"으로 설정
-        if (review.getUpdateTime() != null && !review.getCreateTime().isEqual(review.getUpdateTime())) {
-            state = "편집됨";
-        }
+        String state = review.isEdited() ? "편집됨" : ""; // isEdited 값에 따라 상태 설정
 
         return new ReviewResponse(
 
                 review.getId(),
-                review.getCreateTime(),
+                review.getCreatedDate(),
                 state,
                 likeCount,
                 review.getViewCount(),
