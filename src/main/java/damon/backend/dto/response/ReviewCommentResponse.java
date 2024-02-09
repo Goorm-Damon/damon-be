@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 public class ReviewCommentResponse {
 
     private Long id;
+    private String Nickname;
     private LocalDateTime createdDate;
     private String state;
     private Long reviewId; // 대댓글일 경우에는 부모 댓글의 Id
@@ -35,6 +36,8 @@ public class ReviewCommentResponse {
 
         return new ReviewCommentResponse(
                 reviewComment.getId(),
+                reviewComment.getReview() != null && reviewComment.getReview().getMember() != null
+                        ? reviewComment.getReview().getMember().getName() : null,
                 reviewComment.getCreatedDate(),
                 state,
                 reviewComment.getReview() != null ? reviewComment.getReview().getId() : null, // 리뷰 ID

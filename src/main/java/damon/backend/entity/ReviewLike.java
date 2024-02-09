@@ -35,17 +35,22 @@ public class ReviewLike {
     private Member member;
 
     //연관관계 매핑 메서드
-    public void addReview(Review review) {
+    public void setReview(Review review) {
         this.review = review;
-        if (review != null) {
-            review.getReviewLikes().add(this);
-        }
+        review.getReviewLikes().add(this);
     }
 
-    public void addMember(Member member){
+    public void setMember(Member member){
         this.member = member;
         if (member != null ) {
             member.getReviewLikes().add(this);
         }
+    }
+
+    public static ReviewLike addLike(Review review, Member member) {
+        ReviewLike reviewLike = new ReviewLike();
+        reviewLike.setReview(review);
+        reviewLike.setMember(member);
+        return reviewLike;
     }
 }

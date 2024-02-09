@@ -16,7 +16,7 @@ public class ReviewListResponse {
     private Long id;
     private Area area;
     private LocalDateTime createdDate;
-    //private String state;
+    private String state;
 
     private String title;
 
@@ -36,11 +36,14 @@ public class ReviewListResponse {
         long viewCount = review.getViewCount(); // 조회수
         long commentCount = review.getReviewComments().size(); // 댓글수
 
+        String state = review.isEdited() ? "편집됨" : ""; // isEdited 값에 따라 상태 설정
+
         return new ReviewListResponse(
 
                 review.getId(),
                 review.getArea(),
                 review.getCreatedDate(),
+                state,
                 review.getTitle(),
                 review.getCost(),
                 review.getSuggests(),

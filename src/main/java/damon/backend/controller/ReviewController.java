@@ -1,6 +1,7 @@
 package damon.backend.controller;
 
 
+import damon.backend.dto.login.CustomOAuth2User;
 import damon.backend.dto.request.ReviewRequest;
 import damon.backend.dto.response.ReviewListResponse;
 import damon.backend.dto.response.ReviewResponse;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,9 +32,10 @@ public class ReviewController {
     @Operation(summary = "내 리뷰 등록", description = "내 리뷰를 등록합니다.")
     @ApiResponse(responseCode = "200", description = "리뷰 등록 성공")
     public ReviewResponse postReview(
-            @RequestBody ReviewRequest reviewRequest
-            ){
-        return reviewService.postReview(reviewRequest);
+            @RequestBody ReviewRequest reviewRequest,
+            @AuthenticationPrincipal CustomOAuth2User user
+    ){
+        return reviewService.postReview(reviewRequest, user.getProviderName());
     }
 
 
@@ -58,36 +61,37 @@ public class ReviewController {
     @ApiResponse(responseCode = "200", description = "리뷰 상세 조회 성공")
     public ReviewResponse searchReviewDetail(
             @Schema(description = "리뷰 인덱스", example="1")
-            @PathVariable Long reviewId
+            @PathVariable Long reviewId,
+            @AuthenticationPrincipal CustomOAuth2User user
     ) {
-        ReviewResponse reviewResponse = reviewService.searchReview(reviewId);
+        ReviewResponse reviewResponse = reviewService.searchReview(reviewId,  user.getProviderName());
         reviewService.incrementReviewViewCount(reviewId); // 조회수 증가
         return reviewResponse;
     }
 
     //게시글 수정
-//    @PreAuthorize("#providerName == authentication.principal.providername")
     @PutMapping("/{reviewId}")
     @Operation(summary = "내 리뷰 수정", description = "내 리뷰를 수정합니다.")
     @ApiResponse(responseCode = "200", description = "리뷰 수정 성공")
     public ResponseEntity<ReviewResponse> updateReview(
             @Schema(description = "리뷰 인덱스", example="1")
             @PathVariable Long reviewId,
-            @RequestBody ReviewRequest reviewRequest){ // @AuthenticationPrincipal CustomOAuth2User customOAuth2User 추후에 추가
-        ReviewResponse updatedReview = reviewService.updateReview(reviewId, reviewRequest); //memberId 추후에 추가
+            @RequestBody ReviewRequest reviewRequest,
+            @AuthenticationPrincipal CustomOAuth2User user){
+        ReviewResponse updatedReview = reviewService.updateReview(reviewId, reviewRequest, user.getProviderName()); //memberId 추후에 추가
         return ResponseEntity.ok(updatedReview);
     }
 
     //게시글 삭제
-//    @PreAuthorize("#providerName == authentication.principal.providername")
     @DeleteMapping("/{reviewId}")
     @Operation(summary = "내 리뷰 삭제", description = "내 리뷰를 삭제합니다.")
     @ApiResponse(responseCode = "200", description = "리뷰 등록 삭제")
     public ResponseEntity<Void> deleteReview(
             @Schema(description = "리뷰 인덱스", example="1")
-            @PathVariable Long reviewId
-    ) { // @AuthenticationPrincipal CustomOAuth2User customOAuth2User 추후에 추가
-        reviewService.deleteReview(reviewId); // memberId 추가
+            @PathVariable Long reviewId,
+            @AuthenticationPrincipal CustomOAuth2User user
+    ) {
+        reviewService.deleteReview(reviewId, user.getProviderName()); // memberId 추가
         return ResponseEntity.ok().build(); // HTTP 200 OK 응답
     }
 
@@ -97,10 +101,11 @@ public class ReviewController {
     @ApiResponse(responseCode = "200", description = "리뷰 좋아요 성공")
     public ResponseEntity<ReviewResponse> toggleLike(
             @Schema(description = "리뷰 인덱스", example="1")
-            @PathVariable Long reviewId
+            @PathVariable Long reviewId,
+            @AuthenticationPrincipal CustomOAuth2User user
     ) {
-        ReviewResponse updatedReview = reviewService.toggleLike(reviewId);
-        return ResponseEntity.ok(updatedReview); // 토글 후 리뷰의 최신 상태 반환 // HTTP 200 OK 응답
+        reviewService.toggleLike(reviewId, user.getProviderName());
+        return ResponseEntity.ok().build(); // 토글 후 리뷰의 최신 상태 반환 // HTTP 200 OK 응답
     }
 
 
@@ -110,15 +115,20 @@ public class ReviewController {
     @ApiResponse(responseCode = "200", description = "리뷰 태그별 검색 성공")
     public List<ReviewListResponse> searchReviewsByFreeTag(
             @Schema(description = "검색할 태그명", example="강릉")
-            @RequestParam("freeTag") String freeTag,
+            @RequestParam("tag") String tag,
             @Schema(description = "페이지 인덱스", example="0")
             @RequestParam("page") int page,
             @Schema(description = "한 페이지 당 보여질 리뷰 개수", example="10")
             @RequestParam("pageSize") int pageSize
     ) {
-        return reviewService.searchReviewsByFreeTag(freeTag, page, pageSize);
+        return reviewService.searchReviewsTag(tag, page, pageSize);
     }
 
-
+    // 메인 페이지용 베스트 리뷰 조회
+    @GetMapping("/best")
+    public ResponseEntity<List<ReviewListResponse>> getTopReviewsForMainPage() {
+        List<ReviewListResponse> topReviews = reviewService.findTopReviewsForMainPage(5);
+        return ResponseEntity.ok(topReviews);
+    }
 
 }

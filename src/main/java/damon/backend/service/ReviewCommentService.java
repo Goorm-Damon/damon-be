@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,58 +21,96 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ReviewCommentService {
+public class ReviewCommentService implements CommentStructureOrganizer {
     private final ReviewRepository reviewRepository;
     private final ReviewCommentRepository reviewCommentRepository;
     private final MemberRepository memberRepository;
-    private final ReviewService reviewService;
-
 
     // 댓글 등록
-    public ReviewResponse postComment(Long reviewId, String providerName, ReviewCommentRequest request) {
+    public ReviewResponse postComment(Long reviewId, ReviewCommentRequest request, String providerName) {
         // 사용자 조회
-        Member member = memberRepository.findByProvidername(providerName)
-                .orElseThrow(() -> new RuntimeException("해당 사용자를 찾을 수 없습니다."));
+        Member member = memberRepository.findByProviderName(providerName)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자입니다."));
+
         // 리뷰 조회
-        Review review = reviewRepository.findReviewWithCommentsAndRepliesByReviewId(reviewId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 리뷰입니다"));
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 리뷰입니다."));
 
-        // 새로운 댓글 생성
-        ReviewComment reviewComment = new ReviewComment();
-        reviewComment.setContent(request.getContent());
+        ReviewComment parentComment = null; // 초기화 변경
 
-        // 부모 댓글이 있을 경우
+        // 부모 댓글 처리
         if (request.getParentId() != null) {
             ReviewComment parent = reviewCommentRepository.findById(request.getParentId())
-                    .orElseThrow(() -> new RuntimeException("존재하지 않는 댓글입니다"));
+                    .orElseThrow(() -> new RuntimeException("존재하지 않는 댓글입니다."));
 
-            // 대대댓글 생성 금지 로직
-            if (parent.getParent() != null) {
-                throw new RuntimeException("대대댓글은 허용되지 않습니다");
-            }
-
-            // 부모 댓글이 현재 리뷰에 속하는지 확인
-            if (parent.getReview() == null || !parent.getReview().getId().equals(reviewId)) {
-                throw new RuntimeException("부모 댓글이 현재 리뷰에 속하지 않습니다");
-            }
-
-            // 댓글 및 대댓글 설정
-            reviewComment.setParent(parent);
-            parent.addReply(reviewComment);
         }
 
-        // 댓글 존재 여부와 상관없이 리뷰 + 댓글 연결은 always
-        reviewComment.setReview(review);
+        ReviewComment newComment = ReviewComment.createContent(request.getContent(), review, member, parentComment);
 
-        // 댓글 저장
-        reviewCommentRepository.save(reviewComment);
+        reviewCommentRepository.save(newComment);
 
-        // ReviewService의 메소드를 호출하여 댓글 구조를 조직화
+        // Review와 관련된 모든 댓글 및 대댓글 조직화 후 ReviewResponse 생성
         List<ReviewCommentResponse> organizedComments = organizeCommentStructure(reviewId);
 
-        // 구조화된 댓글 목록을 포함하여 ReviewResponse 반환
+        // 댓글 구조를 다시 조직화하여 리뷰 전체 상태를 반환
         return ReviewResponse.from(review, organizedComments);
     }
+
+    // 댓글 수정
+    public ReviewResponse updateComment(Long commentId, ReviewCommentRequest request, String providerName) {
+        ReviewComment comment = reviewCommentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 댓글입니다"));
+
+        // 사용자 조회
+        Member member = memberRepository.findByProviderName(providerName)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자 입니다"));
+
+        if (!comment.getReview().getMember().getProviderName().equals(providerName)) {
+            throw new IllegalArgumentException("Unauthorized");
+        }
+
+        // 댓글 업데이트 로직
+        comment.updateContent(request.getContent());
+        reviewCommentRepository.save(comment);
+
+        // 댓글이 속한 리뷰의 ID를 얻음
+        Long reviewId = comment.getReview().getId();
+
+        // 여기서는 ReviewRepository를 사용하여 리뷰 정보를 직접 조회하고, 필요한 데이터를 조합하여 ReviewResponse를 생성합니다.
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 리뷰입니다"));
+
+        // 댓글 구조를 다시 조직화
+        List<ReviewCommentResponse> organizedComments = organizeCommentStructure(reviewId);
+
+
+        // 댓글 구조를 다시 조직화하여 리뷰 전체 상태를 반환
+        return ReviewResponse.from(review, organizedComments);
+    }
+
+    // 댓글 삭제
+    public void deleteComment(Long commentId, String providerName) {
+        ReviewComment comment = reviewCommentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 댓글입니다"));
+
+        // 사용자 조회
+        Member member = memberRepository.findByProviderName(providerName)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자 입니다"));
+
+        if (!comment.getReview().getMember().getProviderName().equals(providerName)) {
+            throw new IllegalArgumentException("Unauthorized");
+        }
+
+        // 부모 댓글 삭제 시 대댓글도 함께 삭제
+        if (comment.getParent() == null) {
+            reviewCommentRepository.delete(comment); // 대댓글 포함 삭제
+        } else {
+            // 대댓글만 삭제, 부모 댓글은 남김
+            comment.getParent().getReplies().remove(comment);
+            reviewCommentRepository.delete(comment);
+        }
+    }
+
 
     // 댓글, 대댓글 계층적 구조 생성
     @Transactional(readOnly = true)
@@ -106,54 +143,6 @@ public class ReviewCommentService {
 
         return topLevelComments;
     }
-
-
-    // 댓글 수정
-    public ReviewResponse updateComment(Long commentId, String providerName, ReviewCommentRequest request) {
-        ReviewComment comment = reviewCommentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("Comment not found"));
-
-        // 사용자 조회
-        Member member = memberRepository.findByProvidername(providerName)
-                .orElseThrow(() -> new RuntimeException("해당 사용자를 찾을 수 없습니다."));
-
-        // 댓글 업데이트 로직
-        comment.setContent(request.getContent());
-        comment.setUpdateTime(ZonedDateTime.now()); // 업데이트 시간 수동 설정
-        reviewCommentRepository.save(comment);
-
-        // 댓글이 속한 리뷰의 ID를 얻음
-        Long reviewId = comment.getReview().getId();
-
-        // 댓글 구조를 다시 조직화
-        List<ReviewCommentResponse> organizedComments = organizeCommentStructure(reviewId);
-
-
-        // 댓글 구조를 다시 조직화하여 리뷰 전체 상태를 반환
-        return reviewService.searchReview(reviewId);
-    }
-
-    // 댓글 삭제
-    public void deleteComment(Long commentId, String providerName) {
-         ReviewComment comment = reviewCommentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 댓글입니다"));
-
-        // 사용자 조회
-        Member member = memberRepository.findByProvidername(providerName)
-                .orElseThrow(() -> new RuntimeException("해당 사용자를 찾을 수 없습니다."));
-
-
-        // 부모 댓글 삭제 시 대댓글도 함께 삭제
-        if (comment.getParent() == null) {
-            reviewCommentRepository.delete(comment); // 대댓글 포함 삭제
-        } else {
-            // 대댓글만 삭제, 부모 댓글은 남김
-            comment.getParent().getReplies().remove(comment);
-            reviewCommentRepository.delete(comment);
-        }
-    }
-
-
 
 
 }

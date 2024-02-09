@@ -19,6 +19,7 @@ public class ReviewResponse {
     private String state;
     private long likeCount; // 좋아요 수
     private long viewCount; // 조회수
+    private long commentCount; // 댓글 수
 
     private String title;
     private LocalDate startDate;
@@ -38,6 +39,7 @@ public class ReviewResponse {
 
         long likeCount = review.getReviewLikes().size();
         long viewCount = review.getViewCount(); // 조회수
+        long commentCount = review.getReviewComments().size(); // 댓글수
 
         String state = review.isEdited() ? "편집됨" : ""; // isEdited 값에 따라 상태 설정
 
@@ -47,6 +49,7 @@ public class ReviewResponse {
                 review.getCreatedDate(),
                 state,
                 likeCount,
+                review.getViewCount(),
                 review.getViewCount(),
                 review.getTitle(),
                 review.getStartDate(),
