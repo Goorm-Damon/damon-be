@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,6 +33,7 @@ public class ReviewController {
     @Operation(summary = "내 리뷰 등록", description = "내 리뷰를 등록합니다.")
     @ApiResponse(responseCode = "200", description = "리뷰 등록 성공")
     public ReviewResponse postReview(
+            @Valid
             @RequestBody ReviewRequest reviewRequest,
             @AuthenticationPrincipal CustomOAuth2User user
     ){
@@ -75,6 +77,7 @@ public class ReviewController {
     @ApiResponse(responseCode = "200", description = "리뷰 수정 성공")
     public ResponseEntity<ReviewResponse> updateReview(
             @Schema(description = "리뷰 인덱스", example="1")
+            @Valid
             @PathVariable Long reviewId,
             @RequestBody ReviewRequest reviewRequest,
             @AuthenticationPrincipal CustomOAuth2User user){

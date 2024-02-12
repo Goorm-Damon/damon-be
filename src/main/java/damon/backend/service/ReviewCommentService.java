@@ -6,6 +6,7 @@ import damon.backend.dto.response.ReviewResponse;
 import damon.backend.entity.Member;
 import damon.backend.entity.Review;
 import damon.backend.entity.ReviewComment;
+import damon.backend.exception.ReviewException;
 import damon.backend.repository.MemberRepository;
 import damon.backend.repository.ReviewCommentRepository;
 import damon.backend.repository.ReviewRepository;
@@ -30,18 +31,18 @@ public class ReviewCommentService implements CommentStructureOrganizer {
     public ReviewResponse postComment(Long reviewId, ReviewCommentRequest request, String providerName) {
         // 사용자 조회
         Member member = memberRepository.findByProviderName(providerName)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자입니다."));
+                .orElseThrow(ReviewException::memberNotFound);
 
         // 리뷰 조회
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 리뷰입니다."));
+                .orElseThrow(ReviewException::reviewNotFound);
 
         ReviewComment parentComment = null; // 초기화 변경
 
         // 부모 댓글 처리
         if (request.getParentId() != null) {
-            ReviewComment parent = reviewCommentRepository.findById(request.getParentId())
-                    .orElseThrow(() -> new RuntimeException("존재하지 않는 댓글입니다."));
+            parentComment = reviewCommentRepository.findById(request.getParentId())
+                    .orElseThrow(ReviewException::commentNotFound);
 
         }
 
@@ -59,14 +60,14 @@ public class ReviewCommentService implements CommentStructureOrganizer {
     // 댓글 수정
     public ReviewResponse updateComment(Long commentId, ReviewCommentRequest request, String providerName) {
         ReviewComment comment = reviewCommentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 댓글입니다"));
+                .orElseThrow(ReviewException::commentNotFound);
 
         // 사용자 조회
         Member member = memberRepository.findByProviderName(providerName)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자 입니다"));
+                .orElseThrow(ReviewException::memberNotFound);
 
         if (!comment.getReview().getMember().getProviderName().equals(providerName)) {
-            throw new IllegalArgumentException("Unauthorized");
+            throw ReviewException.unauthorized();
         }
 
         // 댓글 업데이트 로직
@@ -78,7 +79,7 @@ public class ReviewCommentService implements CommentStructureOrganizer {
 
         // 여기서는 ReviewRepository를 사용하여 리뷰 정보를 직접 조회하고, 필요한 데이터를 조합하여 ReviewResponse를 생성합니다.
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 리뷰입니다"));
+                .orElseThrow(ReviewException::reviewNotFound);
 
         // 댓글 구조를 다시 조직화
         List<ReviewCommentResponse> organizedComments = organizeCommentStructure(reviewId);
@@ -91,14 +92,14 @@ public class ReviewCommentService implements CommentStructureOrganizer {
     // 댓글 삭제
     public void deleteComment(Long commentId, String providerName) {
         ReviewComment comment = reviewCommentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 댓글입니다"));
+                .orElseThrow(ReviewException::commentNotFound);
 
         // 사용자 조회
         Member member = memberRepository.findByProviderName(providerName)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자 입니다"));
+                .orElseThrow(ReviewException::memberNotFound);
 
         if (!comment.getReview().getMember().getProviderName().equals(providerName)) {
-            throw new IllegalArgumentException("Unauthorized");
+            throw ReviewException.unauthorized();
         }
 
         // 부모 댓글 삭제 시 대댓글도 함께 삭제
@@ -133,11 +134,15 @@ public class ReviewCommentService implements CommentStructureOrganizer {
             if (comment.getParent() != null) {
                 ReviewCommentResponse parentCommentResponse = commentMap.get(comment.getParent().getId());
                 if (parentCommentResponse != null) {
-                    parentCommentResponse.getReplies().add(commentResponse);
+                    boolean isDuplicate = parentCommentResponse.getReplies().stream()
+                            .anyMatch(reply -> reply.getId().equals(comment.getId()));
+                    if (!isDuplicate) {
+                        parentCommentResponse.getReplies().add(commentMap.get(comment.getId()));
+                    }
                 }
             } else {
                 // 루트 댓글인 경우, topLevelComments에 추가
-                topLevelComments.add(commentResponse);
+                topLevelComments.add(commentMap.get(comment.getId()));
             }
         }
 

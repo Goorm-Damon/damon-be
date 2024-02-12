@@ -14,17 +14,18 @@ import java.util.List;
 public class ReviewResponse {
 
     private Long id;
-
-    private LocalDateTime createdDate;
+    private String name;
     private String state;
-    private long likeCount; // 좋아요 수
+    private LocalDateTime createdDate;
+
     private long viewCount; // 조회수
-    private long commentCount; // 댓글 수
+    private long likeCount; // 좋아요 수
 
     private String title;
+    private Area area;
     private LocalDate startDate;
     private LocalDate endDate;
-    private Area area;
+
     private Long cost;
     private List<String> suggests;
     private List<String> freeTags;
@@ -37,24 +38,23 @@ public class ReviewResponse {
     //정적 팩토리 메서드
     public static ReviewResponse from(Review review,  List<ReviewCommentResponse> organizedComments) {
 
-        long likeCount = review.getReviewLikes().size();
         long viewCount = review.getViewCount(); // 조회수
-        long commentCount = review.getReviewComments().size(); // 댓글수
+        long likeCount = review.getReviewLikes().size();
 
         String state = review.isEdited() ? "편집됨" : ""; // isEdited 값에 따라 상태 설정
 
         return new ReviewResponse(
 
                 review.getId(),
-                review.getCreatedDate(),
+                review.getMember() != null ? review.getMember().getName() : null,
                 state,
+                review.getCreatedDate(),
+                review.getViewCount(),
                 likeCount,
-                review.getViewCount(),
-                review.getViewCount(),
                 review.getTitle(),
+                review.getArea(),
                 review.getStartDate(),
                 review.getEndDate(),
-                review.getArea(),
                 review.getCost(),
                 review.getSuggests(),
                 review.getFreeTags(),

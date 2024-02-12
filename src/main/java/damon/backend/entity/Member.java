@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 @Entity
@@ -30,7 +32,7 @@ public class Member {
 
     //리뷰 댓글 매핑
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ReviewComment> reviewComments = new ArrayList<>();
+    private Set<ReviewComment> reviewComments = new HashSet<>();
 
 
     //리뷰 좋아요 매핑

@@ -13,7 +13,7 @@ public interface ReviewLikeRepository extends JpaRepository<ReviewLike, Long> {
 
 
     //특정 리뷰의 좋아요 추가 or 취소
-    Optional<ReviewLike> findByReviewAndMember(Review review, Member member);;
+    Optional<ReviewLike> findByReviewAndMember(Review review, Member member);
 
 
 }

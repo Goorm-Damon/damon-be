@@ -12,10 +12,11 @@ import java.util.*;
 @Table(name = "review")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class Review extends BaseEntity{
+public class Review extends BaseEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="review_id")
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "review_id")
     private Long id;
 
     private long viewCount;
@@ -59,9 +60,9 @@ public class Review extends BaseEntity{
     private List<ReviewComment> reviewComments = new ArrayList<>();
 
     //연관관계 매핑 메서드
-    public void setMember(Member member){
+    public void setMember(Member member) {
         this.member = member;
-        if (member != null ) {
+        if (member != null) {
             member.getReviews().add(this);
         }
     }
@@ -83,6 +84,7 @@ public class Review extends BaseEntity{
     // 업데이트 메서드
     public void update(ReviewRequest request) {
         populateReviewFields(this, request);
+        this.isEdited = true; // 업데이트 시 isEdited를 true로 설정
     }
 
     // 공통 필드 설정 메서드
@@ -95,27 +97,22 @@ public class Review extends BaseEntity{
         review.suggests = request.getSuggests();
         review.freeTags = request.getFreeTags();
         review.content = request.getContent();
-        // updateTime은 @LastModifiedDate 어노테이션을 사용하여 자동 업데이트 되도록 설정할 수 있습니다.
+
     }
 
-    // 기존의 addLike 메서드를 대체하는 toggleLike 메서드
-    public void toggleLike(Member member) {
-        // 해당 멤버의 좋아요 찾기
-        Optional<ReviewLike> existingLike = reviewLikes.stream()
-                .filter(like -> like.getMember().equals(member))
-                .findFirst();
-
-        if (existingLike.isPresent()) {
-            // 이미 좋아요가 있다면 좋아요 제거
-            reviewLikes.remove(existingLike.get());
+    public void incrementLikeCount() {
+        if (this.likeCount == null) {
+            this.likeCount = 1L;
         } else {
-            // 좋아요가 없다면 새로운 좋아요 추가
-            ReviewLike newLike = new ReviewLike();
-            newLike.setReview(this);
-            newLike.setMember(member);
-            reviewLikes.add(newLike);
+            this.likeCount++;
         }
     }
 
-
+    public void decrementLikeCount() {
+        if (this.likeCount == null || this.likeCount <= 0) {
+            this.likeCount = 0L;
+        } else {
+            this.likeCount--;
+        }
+    }
 }

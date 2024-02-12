@@ -5,8 +5,10 @@ import damon.backend.dto.response.ReviewCommentResponse;
 import damon.backend.dto.response.ReviewListResponse;
 import damon.backend.dto.response.ReviewResponse;
 import damon.backend.entity.*;
+import damon.backend.exception.ReviewException;
 import damon.backend.repository.MemberRepository;
 import damon.backend.repository.ReviewCommentRepository;
+import damon.backend.repository.ReviewLikeRepository;
 import damon.backend.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,13 +27,15 @@ import java.util.stream.Collectors;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final ReviewLikeRepository reviewLikeRepository;
     private final MemberRepository memberRepository;
     private final CommentStructureOrganizer commentStructureOrganizer;
 
     //게시글 등록
     public ReviewResponse postReview(ReviewRequest request, String providerName) {
         Member member = memberRepository.findByProviderName(providerName)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자 입니다"));
+                .orElseThrow(ReviewException::memberNotFound);
+        ;
 
         Review review = Review.create(request, member);
         review = reviewRepository.save(review); // 리뷰 저장
@@ -63,7 +67,7 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public ReviewResponse searchReview(Long reviewId, String providerName) {
         Review review = reviewRepository.findReviewWithCommentsAndRepliesByReviewId(reviewId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 리뷰입니다"));
+                .orElseThrow(ReviewException::reviewNotFound);
 
         // 댓글 구조화 로직을 사용하여 댓글 목록 가져오기 (상세 조회 시에만 호출)
         List<ReviewCommentResponse> organizedComments = commentStructureOrganizer.organizeCommentStructure(reviewId);
@@ -75,7 +79,7 @@ public class ReviewService {
     // 조회수 로직
     public void incrementReviewViewCount(Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 리뷰입니다"));
+                .orElseThrow(ReviewException::reviewNotFound);
 
         review.incrementViewCount(); // 조회수 증가
         reviewRepository.save(review); // 변경 사항 저장
@@ -87,13 +91,13 @@ public class ReviewService {
     public ReviewResponse updateReview(Long reviewId, ReviewRequest request, String providerName) {
 
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 리뷰입니다"));
+                .orElseThrow(ReviewException::reviewNotFound);
 
         Member member = memberRepository.findByProviderName(providerName)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(ReviewException::memberNotFound);
 
         if (!review.getMember().getProviderName().equals(providerName)) {
-            throw new IllegalArgumentException("Unauthorized");
+            throw ReviewException.unauthorized();
         }
 
         // 리뷰 업데이트
@@ -111,30 +115,36 @@ public class ReviewService {
     //게시글 삭제
     public void deleteReview(Long reviewId, String providerName) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 리뷰입니다"));
+                .orElseThrow(ReviewException::reviewNotFound);
         Member member = memberRepository.findByProviderName(providerName)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(ReviewException::memberNotFound);
 
         if (!review.getMember().getProviderName().equals(providerName)) {
-            throw new IllegalArgumentException("Unauthorized");
+            throw ReviewException.unauthorized();
         }
         reviewRepository.delete(review);
     }
 
 
     //좋아요 수 계산 (다시 누르면 좋아요 취소)
+    @Transactional
     public void toggleLike(Long reviewId, String providerName) {
         Member member = memberRepository.findByProviderName(providerName)
-                .orElseThrow(() -> new RuntimeException("Member not found"));
+                .orElseThrow(ReviewException::memberNotFound);
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Review not found"));
+                .orElseThrow(ReviewException::reviewNotFound);
 
-        if (!review.getMember().getProviderName().equals(providerName)) {
-            throw new IllegalArgumentException("Unauthorized");
+        Optional<ReviewLike> existingLike = reviewLikeRepository.findByReviewAndMember(review, member);
+        if (existingLike.isPresent()) {
+            reviewLikeRepository.delete(existingLike.get()); // 좋아요 제거
+            review.decrementLikeCount(); // Review 엔티티 내 좋아요 수 감소 메서드
+        } else {
+            ReviewLike newLike = new ReviewLike();
+            newLike.setReview(review);
+            newLike.setMember(member);
+            reviewLikeRepository.save(newLike); // 좋아요 추가
+            review.incrementLikeCount(); // Review 엔티티 내 좋아요 수 증가 메서드
         }
-
-        review.toggleLike(member);
-        reviewRepository.save(review);
     }
 
     //태그를 통한 검색

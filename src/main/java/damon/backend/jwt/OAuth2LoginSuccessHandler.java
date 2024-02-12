@@ -21,7 +21,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     private final JWTUtil jwtUtil;
 
     // 프론트엔드의 리디렉션 URL
-    private final String frontendRedirectUrl = "http://localhost:3000/main";
+//    private final String frontendRedirectUrl = "http://localhost:3000/main";
 
 
     // 로그인 성공 시 Jwt 토큰 발급
@@ -52,10 +52,10 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 log.info("Header Name: {}, Header Value: {}", headerName, response.getHeader(headerName)));
 
         // 리디렉션 URL에 토큰 추가
-        String redirectUrlWithToken = frontendRedirectUrl + "?token=" + token;
+//        String redirectUrlWithToken = frontendRedirectUrl + "?token=" + token;
 
         // 클라이언트를 리디렉션 URL로 리다이렉트
-        getRedirectStrategy().sendRedirect(request, response, redirectUrlWithToken);
+//        getRedirectStrategy().sendRedirect(request, response, redirectUrlWithToken);
 
     }
 

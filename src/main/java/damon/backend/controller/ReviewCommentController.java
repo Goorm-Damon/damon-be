@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,6 +28,7 @@ public class ReviewCommentController {
     @ApiResponse(responseCode = "200", description = "댓글 등록 성공")
     public ReviewResponse postComment(
             @Schema(description = "리뷰 인덱스", example="1")
+            @Valid
             @PathVariable Long reviewId,
             @RequestBody ReviewCommentRequest request,
             @AuthenticationPrincipal CustomOAuth2User user) {
@@ -42,6 +44,7 @@ public class ReviewCommentController {
             @Schema(description = "리뷰 인덱스", example="1")
             @PathVariable Long reviewId,
             @Schema(description = "댓글 인덱스", example="1")
+            @Valid
             @PathVariable Long commentId,
             @RequestBody ReviewCommentRequest request,
             @AuthenticationPrincipal CustomOAuth2User user) {
