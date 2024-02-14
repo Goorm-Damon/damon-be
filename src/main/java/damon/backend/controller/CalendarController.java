@@ -1,12 +1,12 @@
 package damon.backend.controller;
 
-import damon.backend.dto.request.CalendarCreateRequestDto;
-import damon.backend.dto.request.CalendarEditRequestDto;
-import damon.backend.dto.request.CalendarsDeleteRequestDto;
-import damon.backend.dto.response.CalendarCreateResponseDto;
-import damon.backend.dto.response.CalendarEditResponseDto;
-import damon.backend.dto.response.CalendarResponseDto;
-import damon.backend.dto.response.CalendarsResponseDto;
+import damon.backend.dto.request.calendar.CalendarCreateRequestDto;
+import damon.backend.dto.request.calendar.CalendarEditRequestDto;
+import damon.backend.dto.request.calendar.CalendarsDeleteRequestDto;
+import damon.backend.dto.response.calendar.CalendarCreateResponseDto;
+import damon.backend.dto.response.calendar.CalendarEditResponseDto;
+import damon.backend.dto.response.calendar.CalendarResponseDto;
+import damon.backend.dto.response.calendar.CalendarsResponseDto;
 import damon.backend.service.CalendarService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -46,7 +46,7 @@ public class CalendarController {
             @Schema(description = "페이지에 출력할 개수를 입력합니다.", defaultValue = "10")
             @RequestParam(name = "size",defaultValue = "10") int size
     ) {
-        // 로그인 구현 후 member Id 추후 수정
+//        TODO: 로그인 구현 후 member Id 추후 수정
         String memberId = "1";
         return calendarService.getCalendars(memberId, page, size);
     }
@@ -58,7 +58,7 @@ public class CalendarController {
             @Schema(description = "조회 할 일정 상세 페이지 ID", example="1")
             @PathVariable("calendarId") Long calendarId
     ) {
-        // 로그인 구현 후 member Id 추후 수정
+//         TODO: 로그인 구현 후 member Id 추후 수정
         String memberId = "1";
         return calendarService.getCalendar(memberId, calendarId);
     }
@@ -72,7 +72,7 @@ public class CalendarController {
 
             @RequestBody CalendarEditRequestDto calendarEditRequestDto
     ) {
-        // 로그인 구현 후 member Id 추후 수정
+//        TODO: 로그인 구현 후 member Id 추후 수정
         String memberId = "1";
         return calendarService.updateCalendar(memberId, calendarId, calendarEditRequestDto);
     }
@@ -84,7 +84,7 @@ public class CalendarController {
             @Schema(description = "삭제 할 일정 상세 페이지 ID", example="1")
             @PathVariable("calendarId") Long calendarId
     ) {
-        // 로그인 구현 후 member Id 추후 수정
+//        TODO: 로그인 구현 후 member Id 추후 수정
         String memberId = "1";
         calendarService.deleteCalendar(memberId, calendarId);
     }
@@ -95,7 +95,7 @@ public class CalendarController {
     public void deleteCalendars(
             @RequestBody CalendarsDeleteRequestDto calendarsDeleteRequestDto
     ) {
-        // 로그인 구현 후 member Id 추후 수정
+//        TODO: 로그인 구현 후 member Id 추후 수정
         String memberId = "1";
         calendarService.deleteCalendars(memberId, calendarsDeleteRequestDto);
     }
