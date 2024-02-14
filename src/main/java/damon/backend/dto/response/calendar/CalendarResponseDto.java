@@ -1,4 +1,4 @@
-package damon.backend.dto.response;
+package damon.backend.dto.response.calendar;
 
 import damon.backend.entity.Area;
 import damon.backend.entity.Calendar;
@@ -13,24 +13,21 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
-public class CalendarsResponseDto {
-    private Long calendarId;
+public class CalendarResponseDto {
     private String title;
     private LocalDate startDate;
     private LocalDate endDate;
     private Area area;
 
-    public static CalendarsResponseDto from(Calendar calendar) {
-        return new CalendarsResponseDto(
-                calendar.getId(),
+    private List<TravelDetailDto> travels;
+
+    public static CalendarResponseDto from(Calendar calendar) {
+        return new CalendarResponseDto(
                 calendar.getTitle(),
                 calendar.getStartDate(),
                 calendar.getEndDate(),
-                calendar.getArea()
+                calendar.getArea(),
+                TravelDetailDto.listFrom(calendar.getTravels())
         );
-    }
-
-    public static List<CalendarsResponseDto> listFrom(List<Calendar> calendars) {
-        return calendars.stream().map(CalendarsResponseDto::from).toList();
     }
 }

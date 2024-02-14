@@ -1,4 +1,4 @@
-package damon.backend.dto.response;
+package damon.backend.dto.response.calendar;
 
 import damon.backend.entity.Travel;
 import lombok.AccessLevel;

@@ -1,4 +1,4 @@
-package damon.backend.dto.response;
+package damon.backend.dto.response.calendar;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -8,10 +8,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
-public class CalendarEditResponseDto {
+public class CalendarCreateResponseDto {
     private Long calendarId;
 
-    public static CalendarEditResponseDto from(Long calendarId) {
-        return new CalendarEditResponseDto(calendarId);
+    public static CalendarCreateResponseDto from(Long calendarId) {
+        return new CalendarCreateResponseDto(calendarId);
     }
 }

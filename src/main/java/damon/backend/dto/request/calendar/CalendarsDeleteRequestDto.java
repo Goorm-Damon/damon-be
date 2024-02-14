@@ -1,4 +1,4 @@
-package damon.backend.dto.request;
+package damon.backend.dto.request.calendar;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,7 +12,7 @@ import java.util.List;
 public class CalendarsDeleteRequestDto {
     private List<Long> calendarIds;
 
-    public static CalendarsDeleteRequestDto of (List<Long> calendarIds) {
+    public static CalendarsDeleteRequestDto of(List<Long> calendarIds) {
         return new CalendarsDeleteRequestDto(calendarIds);
     }
 }

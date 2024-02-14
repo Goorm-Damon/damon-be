@@ -1,9 +1,9 @@
 package damon.backend.service;
 
-import damon.backend.dto.request.CalendarCreateRequestDto;
-import damon.backend.dto.request.TravelCreateRequestDto;
-import damon.backend.dto.response.CalendarResponseDto;
-import damon.backend.dto.response.CalendarsResponseDto;
+import damon.backend.dto.request.calendar.CalendarCreateRequestDto;
+import damon.backend.dto.request.calendar.TravelCreateRequestDto;
+import damon.backend.dto.response.calendar.CalendarResponseDto;
+import damon.backend.dto.response.calendar.CalendarsResponseDto;
 import damon.backend.entity.Area;
 import damon.backend.entity.Calendar;
 import damon.backend.entity.Member;

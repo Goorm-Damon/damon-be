@@ -1,13 +1,13 @@
 package damon.backend.service;
 
-import damon.backend.dto.request.CalendarCreateRequestDto;
-import damon.backend.dto.request.CalendarEditRequestDto;
-import damon.backend.dto.request.CalendarsDeleteRequestDto;
-import damon.backend.dto.request.TravelEditRequestDto;
-import damon.backend.dto.response.CalendarCreateResponseDto;
-import damon.backend.dto.response.CalendarEditResponseDto;
-import damon.backend.dto.response.CalendarResponseDto;
-import damon.backend.dto.response.CalendarsResponseDto;
+import damon.backend.dto.request.calendar.CalendarCreateRequestDto;
+import damon.backend.dto.request.calendar.CalendarEditRequestDto;
+import damon.backend.dto.request.calendar.CalendarsDeleteRequestDto;
+import damon.backend.dto.request.calendar.TravelEditRequestDto;
+import damon.backend.dto.response.calendar.CalendarCreateResponseDto;
+import damon.backend.dto.response.calendar.CalendarEditResponseDto;
+import damon.backend.dto.response.calendar.CalendarResponseDto;
+import damon.backend.dto.response.calendar.CalendarsResponseDto;
 import damon.backend.entity.Calendar;
 import damon.backend.entity.Member;
 import damon.backend.entity.Travel;

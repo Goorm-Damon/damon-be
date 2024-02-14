@@ -1,4 +1,4 @@
-package damon.backend.dto.request;
+package damon.backend.dto.request.calendar;
 
 import damon.backend.entity.Area;
 import lombok.AllArgsConstructor;
