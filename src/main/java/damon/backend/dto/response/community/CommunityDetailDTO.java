@@ -1,10 +1,13 @@
 package damon.backend.dto.response.community;
 
 import damon.backend.entity.community.Community;
+import damon.backend.entity.community.CommunityComment;
 import damon.backend.enums.CommunityType;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,9 +46,10 @@ public class CommunityDetailDTO {
                 .map(CommunityLikeDTO::new)
                 .collect(Collectors.toList());
 
-        this.comments = community.getComments().reversed() // 역순으로 정렬
+        this.comments = community.getComments()
                 .stream()
                 .map(CommunityCommentDTO::new)
+                .sorted(Comparator.comparing(CommunityCommentDTO::getCreatedDate).reversed())
                 .collect(Collectors.toList());
     }
 }
