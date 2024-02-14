@@ -1,6 +1,6 @@
 package damon.backend.dto.response.community;
 
-import damon.backend.entity.CommunityComment;
+import damon.backend.entity.community.CommunityComment;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 public class CommunityCommentDTO {
 
     private Long commentId;
-    private String memberId;
+    private Long memberId;
     private String memberName;
     private String memberImage;
     private LocalDateTime createdDate;
@@ -21,7 +21,7 @@ public class CommunityCommentDTO {
     public CommunityCommentDTO(CommunityComment communityComment) {
         this.commentId = communityComment.getCommentId();
         this.memberId = communityComment.getMember().getId();
-        this.memberName = communityComment.getMember().getNickname();
+        this.memberName = communityComment.getMember().getName();
         this.memberImage = communityComment.getMember().getProfileImgUrl();
         this.createdDate = communityComment.getCreatedDate();
         this.content = communityComment.getContent();

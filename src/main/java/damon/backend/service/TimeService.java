@@ -1,6 +1,5 @@
 package damon.backend.service;
 
-import damon.backend.util.trace.LogTrace;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,8 +11,6 @@ import java.time.format.DateTimeFormatter;
 @RequiredArgsConstructor
 @Transactional
 public class TimeService {
-
-    private final LogTrace trace;
 
     public String getNowTime() {
         LocalDateTime currentTime = LocalDateTime.now();

@@ -1,11 +1,12 @@
-package damon.backend.entity;
+package damon.backend.entity.community;
 
+import damon.backend.entity.BaseEntity;
+import damon.backend.entity.Member;
 import damon.backend.enums.CommunityType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,9 +15,9 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "community")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "community")
 public class Community extends BaseEntity {
 
     @Id
@@ -52,6 +53,23 @@ public class Community extends BaseEntity {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "community", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommunityComment> comments = new ArrayList<>();
 
+    public Community(Member member, CommunityType type, String title, String content) {
+        this.member = member;
+        this.type = type;
+        this.title = title;
+        this.content = content;
+        this.views = 0;
+    }
+
+    public Community(Member member, CommunityType type, String title, String content, List<String> images) {
+        this.member = member;
+        this.type = type;
+        this.title = title;
+        this.content = content;
+        this.views = 0;
+        this.images = images;
+    }
+
     public void setCommunity(String title, String content) {
         this.title = title;
         this.content = content;
@@ -59,60 +77,30 @@ public class Community extends BaseEntity {
     }
 
     public void setCommunity(String title, String content, List<String> images) {
-        this.title = title;
-        this.content = content;
+        setCommunity(title, content);
         this.images = images;
-        this.lastModifiedDate = LocalDateTime.now(); // 마지막 수정 시간
     }
 
-    // 좋아요 여부
+    public CommunityComment addComment(Member member, String content) {
+        CommunityComment comment = new CommunityComment(member, this, content);
+        comments.add(comment);
+        return comment;
+    }
+
     public boolean isLike(Member member) {
-        return likes.stream()
-                .anyMatch(like -> like.getMember().getId().equals(member.getId()));
+        return likes.stream().anyMatch(like -> like.getMember().getId().equals(member.getId()));
     }
 
-    // 좋아요 추가
     public void addLike(Member member) {
         CommunityLike like = new CommunityLike(this, member);
         likes.add(like);
     }
 
-    // 좋아요 제거
     public void removeLike(Member member) {
-        CommunityLike findLike = likes.stream()
-            .filter(like -> like.getMember().getId().equals(member.getId()))
-            .findFirst()
-            .orElse(null);
+        CommunityLike findLike = likes.stream().filter(like -> like.getMember().getId().equals(member.getId())).findFirst().orElse(null);
 
         if (findLike != null) {
             likes.remove(findLike);
         }
-    }
-
-    // 댓글 추가
-    public CommunityComment addComment(Member member, String content) {
-        CommunityComment comment = new CommunityComment(this, member, content);
-        comments.add(comment);
-        return comment;
-    }
-
-    // 댓글 수정
-    public void setComment(CommunityComment comment, String newContent) {
-        if (comments.contains(comment)) {
-            comment.setCommunityComment(newContent);
-        }
-    }
-
-    // 댓글 제거
-    public void removeComment(CommunityComment comment) {
-        comments.remove(comment);
-    }
-
-    public Community(Member member, CommunityType type, String title, String content) {
-        this.member = member;
-        this.type = type;
-        this.title = title;
-        this.content = content;
-        this.views = 0;
     }
 }

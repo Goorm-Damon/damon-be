@@ -1,18 +1,20 @@
-package damon.backend.entity;
+package damon.backend.entity.community;
 
+import damon.backend.entity.BaseEntity;
+import damon.backend.entity.Member;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "community_comment")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "community_comment")
 public class CommunityComment extends BaseEntity {
 
     @Id
@@ -20,6 +22,7 @@ public class CommunityComment extends BaseEntity {
     @Column(name = "community_comment_id")
     private Long commentId;
 
+//    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "community_id")
     private Community community;
@@ -28,9 +31,11 @@ public class CommunityComment extends BaseEntity {
     @JoinColumn(name = "member_id")
     private Member member;
 
+//    @Setter
     @Column(name = "community_comment_content")
     private String content;
 
+//    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "community_comment_parent_id")
     private CommunityComment parentComment;
@@ -38,42 +43,25 @@ public class CommunityComment extends BaseEntity {
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<CommunityComment> childComments = new ArrayList<>();
 
-    public void setCommunityComment(String content) {
-        this.content = content;
-        this.lastModifiedDate = LocalDateTime.now(); // 마지막 수정 시간
-    }
-
-    public void deleteCommunityComment(Long commentId) {
-        this.getCommunity().getComments().remove(this);
-    }
-
-    public CommunityComment(Community community, Member member, String content) {
-        this.community = community;
+    public CommunityComment(Member member, Community community, String content) {
         this.member = member;
+        this.community = community;
         this.content = content;
     }
 
-    public CommunityComment(Community community, Member member, String content, CommunityComment parentComment) {
-        this.community = community;
+    public CommunityComment(Member member, Community community, String content, CommunityComment parentComment) {
         this.member = member;
+        this.community = community;
         this.content = content;
         this.parentComment = parentComment;
     }
 
-    // 대댓글 추가
-    public void addChildComment(CommunityComment communityComment) {
-        this.childComments.add(communityComment);
+    public void setCommunityComment(String content) {
+        this.content = content;
     }
 
-    // 대댓글 수정
-    public void setChildComment(CommunityComment childComment, String newContent) {
-        if (childComments.contains(childComment)) {
-            childComment.setCommunityComment(newContent);
-        }
-    }
-
-    // 대댓글 제거
-    public void removeChildComment(CommunityComment childComment) {
-        childComments.remove(childComment);
+    public CommunityComment addChildComment(CommunityComment childComment) {
+        childComments.add(childComment);
+        return childComment;
     }
 }

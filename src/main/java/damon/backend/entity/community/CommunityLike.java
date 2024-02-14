@@ -1,5 +1,7 @@
-package damon.backend.entity;
+package damon.backend.entity.community;
 
+import damon.backend.entity.BaseEntity;
+import damon.backend.entity.Member;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

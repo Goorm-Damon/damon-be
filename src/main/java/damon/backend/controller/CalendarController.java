@@ -32,7 +32,7 @@ public class CalendarController {
 //    @ApiResponse(responseCode = "400", description = "일정 등록 실패")
     public Result<CalendarCreateResponseDto> createCalendar(@RequestBody CalendarCreateRequestDto calendarCreateRequestDto) {
         // 로그인 구현 후 member Id 추후 수정
-        String memberId = "1";
+        Long memberId = 1L;
 
         CalendarCreateResponseDto calendarCreateResponseDto = calendarService.createCalendar(memberId, calendarCreateRequestDto);
 
@@ -50,7 +50,7 @@ public class CalendarController {
             @RequestParam(name = "size", defaultValue = "10") int size
     ) {
 //        TODO: 로그인 구현 후 member Id 추후 수정
-        String memberId = "1";
+        Long memberId = 1L;
         Page<CalendarsResponseDto> calendarPages = calendarService.getCalendars(memberId, page, size);
 
         return Result.success(calendarPages);
@@ -64,7 +64,7 @@ public class CalendarController {
             @PathVariable("calendarId") Long calendarId
     ) {
 //         TODO: 로그인 구현 후 member Id 추후 수정
-        String memberId = "1";
+        Long memberId = 1L;
         CalendarResponseDto calendarResponseDto = calendarService.getCalendar(memberId, calendarId);
 
         return Result.success(calendarResponseDto);
@@ -80,7 +80,7 @@ public class CalendarController {
             @RequestBody CalendarEditRequestDto calendarEditRequestDto
     ) {
 //        TODO: 로그인 구현 후 member Id 추후 수정
-        String memberId = "1";
+        Long memberId = 1L;
         CalendarEditResponseDto calendarEditResponseDto = calendarService.updateCalendar(memberId, calendarId, calendarEditRequestDto);
 
         return Result.success(calendarEditResponseDto);
@@ -94,7 +94,7 @@ public class CalendarController {
             @PathVariable("calendarId") Long calendarId
     ) {
 //        TODO: 로그인 구현 후 member Id 추후 수정
-        String memberId = "1";
+        Long memberId = 1L;
         calendarService.deleteCalendar(memberId, calendarId);
 
         return Result.success("내 일정 삭제 성공");
@@ -107,7 +107,7 @@ public class CalendarController {
             @RequestBody CalendarsDeleteRequestDto calendarsDeleteRequestDto
     ) {
 //        TODO: 로그인 구현 후 member Id 추후 수정
-        String memberId = "1";
+        Long memberId = 1L;
         calendarService.deleteCalendars(memberId, calendarsDeleteRequestDto);
 
         return Result.success("내 일정 선택 삭제 성공");

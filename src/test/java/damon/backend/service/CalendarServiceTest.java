@@ -52,8 +52,8 @@ class CalendarServiceTest {
     @BeforeEach
     void setUp() {
         member = new Member();
-        member.setId("testId");
-        member.setNickname("test nickname");
+        member.setId(1L);
+        member.setName("test nickname");
         member.setProfileImgUrl("/test/url");
         ArrayList<TravelCreateRequestDto> travelDtoList = new ArrayList<>();
 
@@ -120,7 +120,7 @@ class CalendarServiceTest {
 
         List<Calendar> subList = calendars.subList(start, end);
         Page<Calendar> mockPage = new PageImpl<>(subList, pageRequest, calendars.size());
-        when(calendarRepository.findPageByMember(any(String.class), any(PageRequest.class))).thenReturn(mockPage);
+        when(calendarRepository.findPageByMember(any(Long.class), any(PageRequest.class))).thenReturn(mockPage);
 
         // Action
         Page<CalendarsResponseDto> result = calendarService.getCalendars(member.getId(), page, size);
@@ -128,7 +128,7 @@ class CalendarServiceTest {
         // Verify
         assertNotNull(result);
         assertEquals(size, result.getContent().size());
-        verify(calendarRepository).findPageByMember(any(String.class), any(PageRequest.class));
+        verify(calendarRepository).findPageByMember(any(Long.class), any(PageRequest.class));
     }
 
     @DisplayName("getCalendar: 멤버의 일정 글 상세 조회한다.")

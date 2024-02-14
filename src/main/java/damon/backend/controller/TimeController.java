@@ -1,7 +1,6 @@
 package damon.backend.controller;
 
 import damon.backend.service.TimeService;
-import damon.backend.util.trace.LogTrace;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class TimeController {
 
-    private final LogTrace trace;
     private final TimeService timeService;
 
     @GetMapping("/time")
