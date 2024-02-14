@@ -11,6 +11,8 @@ import damon.backend.dto.response.calendar.CalendarsResponseDto;
 import damon.backend.entity.Calendar;
 import damon.backend.entity.Member;
 import damon.backend.entity.Travel;
+import damon.backend.exception.DataNotFoundException;
+import damon.backend.exception.NotMeException;
 import damon.backend.repository.CalendarRepository;
 import damon.backend.repository.MemberRepository;
 import damon.backend.repository.TravelRepository;
@@ -43,7 +45,7 @@ public class CalendarService {
     @Transactional
     public CalendarCreateResponseDto createCalendar(String memberId, CalendarCreateRequestDto requestDto) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new DataNotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
 
         // 일정 글 생성
         Calendar calendar = Calendar.builder()
@@ -99,13 +101,13 @@ public class CalendarService {
     @Transactional(readOnly = true)
     public CalendarResponseDto getCalendar(String memberId, Long calendarId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new DataNotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
 
         Calendar calendar = calendarRepository.findByIdWithTravel(calendarId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 일정을 찾을 수 없습니다."));
+                .orElseThrow(() -> new DataNotFoundException("해당 일정을 찾을 수 없습니다. id : " + calendarId));
 
         if (!calendar.getMember().getId().equals(member.getId())) {
-            throw new IllegalArgumentException("해당 일정을 조회할 수 없습니다.");
+            throw new NotMeException();
         }
 
         return CalendarResponseDto.from(calendar);
@@ -120,13 +122,13 @@ public class CalendarService {
     @Transactional
     public CalendarEditResponseDto updateCalendar(String memberId, Long calendarId, CalendarEditRequestDto requestDto) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new DataNotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
 
         Calendar calendar = calendarRepository.findByIdWithTravel(calendarId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 일정을 찾을 수 없습니다."));
+                .orElseThrow(() -> new DataNotFoundException("해당 일정을 찾을 수 없습니다. id : " + calendarId));
 
         if (!calendar.getMember().getId().equals(member.getId())) {
-            throw new IllegalArgumentException("해당 일정을 수정할 수 없습니다.");
+            throw new NotMeException();
         }
 
         // 일정 글 업데이트 로직
@@ -175,13 +177,13 @@ public class CalendarService {
     @Transactional
     public void deleteCalendar(String memberId, Long calendarId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new DataNotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
 
         Calendar calendar = calendarRepository.findById(calendarId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 일정을 찾을 수 없습니다."));
+                .orElseThrow(() -> new DataNotFoundException("해당 일정을 찾을 수 없습니다. id : " + calendarId));
 
         if (!calendar.getMember().getId().equals(member.getId())) {
-            throw new IllegalArgumentException("해당 일정을 삭제할 수 없습니다.");
+            throw new NotMeException();
         }
         // cascde로 삭제합니다.
         calendarRepository.delete(calendar);
@@ -195,12 +197,12 @@ public class CalendarService {
     @Transactional
     public void deleteCalendars(String memberId, CalendarsDeleteRequestDto requestDto) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new DataNotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
 
         List<Calendar> calendars = calendarRepository.findAllById(requestDto.getCalendarIds());
 
         if(calendars.size() != requestDto.getCalendarIds().size()) {
-            throw new IllegalArgumentException("요청된 일정 중 일부가 존재하지 않습니다.");
+            throw new DataNotFoundException("요청된 일정 중 일부가 존재하지 않습니다.");
         }
 
         calendarRepository.deleteAllByIn(requestDto.getCalendarIds());
