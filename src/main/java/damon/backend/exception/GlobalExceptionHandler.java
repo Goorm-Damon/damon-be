@@ -15,9 +15,9 @@ public class GlobalExceptionHandler {
         return Result.error(e.getMessage());
     }
 
-    @ExceptionHandler(NotFountException.class)
+    @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Result dataNotFound(NotFountException e) {
+    public Result dataNotFound(NotFoundException e) {
         return Result.error(e.getMessage());
     }
 

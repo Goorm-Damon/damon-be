@@ -11,7 +11,7 @@ import damon.backend.dto.response.calendar.CalendarsResponseDto;
 import damon.backend.entity.Calendar;
 import damon.backend.entity.Member;
 import damon.backend.entity.Travel;
-import damon.backend.exception.DataNotFoundException;
+import damon.backend.exception.NotFoundException;
 import damon.backend.exception.NotMeException;
 import damon.backend.repository.CalendarRepository;
 import damon.backend.repository.MemberRepository;
@@ -45,7 +45,7 @@ public class CalendarService {
     @Transactional
     public CalendarCreateResponseDto createCalendar(Long memberId, CalendarCreateRequestDto requestDto) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new DataNotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
+                .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
 
         // 일정 글 생성
         Calendar calendar = Calendar.builder()
@@ -84,7 +84,7 @@ public class CalendarService {
     @Transactional(readOnly = true)
     public Page<CalendarsResponseDto> getCalendars(Long memberId, int page, int size)  {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdDate"));
         Page<Calendar> calendarPage = calendarRepository.findPageByMember(member.getId(), pageable);
@@ -101,10 +101,10 @@ public class CalendarService {
     @Transactional(readOnly = true)
     public CalendarResponseDto getCalendar(Long memberId, Long calendarId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new DataNotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
+                .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
 
         Calendar calendar = calendarRepository.findByIdWithTravel(calendarId)
-                .orElseThrow(() -> new DataNotFoundException("해당 일정을 찾을 수 없습니다. id : " + calendarId));
+                .orElseThrow(() -> new NotFoundException("해당 일정을 찾을 수 없습니다. id : " + calendarId));
 
         if (!calendar.getMember().getId().equals(member.getId())) {
             throw new NotMeException();
@@ -122,10 +122,10 @@ public class CalendarService {
     @Transactional
     public CalendarEditResponseDto updateCalendar(Long memberId, Long calendarId, CalendarEditRequestDto requestDto) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new DataNotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
+                .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
 
         Calendar calendar = calendarRepository.findByIdWithTravel(calendarId)
-                .orElseThrow(() -> new DataNotFoundException("해당 일정을 찾을 수 없습니다. id : " + calendarId));
+                .orElseThrow(() -> new NotFoundException("해당 일정을 찾을 수 없습니다. id : " + calendarId));
 
         if (!calendar.getMember().getId().equals(member.getId())) {
             throw new NotMeException();
@@ -177,10 +177,10 @@ public class CalendarService {
     @Transactional
     public void deleteCalendar(Long memberId, Long calendarId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new DataNotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
+                .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
 
         Calendar calendar = calendarRepository.findById(calendarId)
-                .orElseThrow(() -> new DataNotFoundException("해당 일정을 찾을 수 없습니다. id : " + calendarId));
+                .orElseThrow(() -> new NotFoundException("해당 일정을 찾을 수 없습니다. id : " + calendarId));
 
         if (!calendar.getMember().getId().equals(member.getId())) {
             throw new NotMeException();
@@ -197,12 +197,12 @@ public class CalendarService {
     @Transactional
     public void deleteCalendars(Long memberId, CalendarsDeleteRequestDto requestDto) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new DataNotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
+                .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다. id : " + memberId));
 
         List<Calendar> calendars = calendarRepository.findAllById(requestDto.getCalendarIds());
 
         if(calendars.size() != requestDto.getCalendarIds().size()) {
-            throw new DataNotFoundException("요청된 일정 중 일부가 존재하지 않습니다.");
+            throw new NotFoundException("요청된 일정 중 일부가 존재하지 않습니다.");
         }
 
         calendarRepository.deleteAllByIn(requestDto.getCalendarIds());
