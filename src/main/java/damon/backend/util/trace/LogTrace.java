@@ -55,6 +55,9 @@ public class LogTrace {
 
     private void releaseTraceId() {
         TraceId traceId = traceIdHolder.get();
+
+        if (traceId == null) return;
+
         if (traceId.isFirstLevel()) {
             traceIdHolder.remove();//destroy
         } else {
