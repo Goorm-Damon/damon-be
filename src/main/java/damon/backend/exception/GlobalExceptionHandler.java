@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
             case MEMBER_NOT_FOUND -> HttpStatus.NOT_FOUND;
             case REVIEW_NOT_FOUND -> HttpStatus.NOT_FOUND;
             case COMMENT_NOT_FOUND -> HttpStatus.NOT_FOUND;
-            case UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
+//            case UNAUTHORIZED -> HttpStatus.UNAUTHORIZED;
             case IMAGE_UPLOAD_FAILED -> HttpStatus.INTERNAL_SERVER_ERROR;
             case IMAGE_SIZE_EXCEEDED -> HttpStatus.PAYLOAD_TOO_LARGE;
             default -> HttpStatus.BAD_REQUEST;

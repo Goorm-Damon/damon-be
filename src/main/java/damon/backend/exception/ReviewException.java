@@ -15,7 +15,7 @@ public class ReviewException extends RuntimeException{
         MEMBER_NOT_FOUND,
         REVIEW_NOT_FOUND,
         COMMENT_NOT_FOUND,
-        UNAUTHORIZED,
+//        UNAUTHORIZED,
         IMAGE_UPLOAD_FAILED, // 이미지 업로드 실패
         IMAGE_SIZE_EXCEEDED // 이미지 크기 초과
     }
@@ -40,9 +40,9 @@ public class ReviewException extends RuntimeException{
         return new ReviewException(ErrorType.COMMENT_NOT_FOUND, "존재하지 않는 댓글입니다.");
     }
 
-    public static ReviewException unauthorized() {
-        return new ReviewException(ErrorType.UNAUTHORIZED, "접근 권한이 없습니다.");
-    }
+//    public static ReviewException unauthorized() {
+//        return new ReviewException(ErrorType.UNAUTHORIZED, "접근 권한이 없습니다.");
+//    }
 
     // 이미지 업로드 실패에 대한 팩토리 메서드
     public static ReviewException imageUploadFailed() {

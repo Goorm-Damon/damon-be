@@ -39,12 +39,11 @@ public class ReviewService {
     private final ReviewImageService reviewImageService;
 
     //게시글 등록
-    public ReviewResponse postReview(ReviewRequest request, List<MultipartFile> images, String providerName) {
-        Member member = memberRepository.findByProviderName(providerName)
-                .orElseThrow(ReviewException::memberNotFound);
-        ;
+    public ReviewResponse postReview(ReviewRequest request, List<MultipartFile> images) {
+//        Member member = memberRepository.findByProviderName(providerName)
+//                .orElseThrow(ReviewException::memberNotFound);
 
-        Review review = Review.create(request, member);
+        Review review = Review.create(request);
         review = reviewRepository.save(review); // 리뷰 저장
 
 // 이미지 처리
@@ -76,7 +75,7 @@ public class ReviewService {
 
     //게시글 상세 내용 조회 (댓글 포함)
     @Transactional(readOnly = true)
-    public ReviewResponse searchReview(Long reviewId, String providerName) {
+    public ReviewResponse searchReview(Long reviewId) {
         Review review = reviewRepository.findReviewWithCommentsAndRepliesByReviewId(reviewId)
                 .orElseThrow(ReviewException::reviewNotFound);
 
@@ -99,17 +98,17 @@ public class ReviewService {
 
 
     // 게시글 수정
-    public ReviewResponse updateReview(Long reviewId, ReviewRequest request, List<MultipartFile> newImages, List<Long> imageIdsToDelete, String providerName)  {
+    public ReviewResponse updateReview(Long reviewId, ReviewRequest request, List<MultipartFile> newImages, List<Long> imageIdsToDelete)  {
 
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(ReviewException::reviewNotFound);
 
-        Member member = memberRepository.findByProviderName(providerName)
-                .orElseThrow(ReviewException::memberNotFound);
+//        Member member = memberRepository.findByProviderName(providerName)
+//                .orElseThrow(ReviewException::memberNotFound);
 
-        if (!review.getMember().getProviderName().equals(providerName)) {
-            throw ReviewException.unauthorized();
-        }
+//        if (!review.getMember().getProviderName().equals(providerName)) {
+//            throw ReviewException.unauthorized();
+//        }
 
         // 리뷰 업데이트
         review.update(request);
@@ -127,35 +126,35 @@ public class ReviewService {
     }
 
     //게시글 삭제
-    public void deleteReview(Long reviewId, String providerName) {
+    public void deleteReview(Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(ReviewException::reviewNotFound);
-        Member member = memberRepository.findByProviderName(providerName)
-                .orElseThrow(ReviewException::memberNotFound);
-
-        if (!review.getMember().getProviderName().equals(providerName)) {
-            throw ReviewException.unauthorized();
-        }
+//        Member member = memberRepository.findByProviderName(providerName)
+//                .orElseThrow(ReviewException::memberNotFound);
+//
+//        if (!review.getMember().getProviderName().equals(providerName)) {
+//            throw ReviewException.unauthorized();
+//        }
         reviewRepository.delete(review);
     }
 
 
     //좋아요 수 계산 (다시 누르면 좋아요 취소)
     @Transactional
-    public void toggleLike(Long reviewId, String providerName) {
-        Member member = memberRepository.findByProviderName(providerName)
-                .orElseThrow(ReviewException::memberNotFound);
+    public void toggleLike(Long reviewId) {
+//        Member member = memberRepository.findByProviderName(providerName)
+//                .orElseThrow(ReviewException::memberNotFound);
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(ReviewException::reviewNotFound);
 
-        Optional<ReviewLike> existingLike = reviewLikeRepository.findByReviewAndMember(review, member);
+        Optional<ReviewLike> existingLike = reviewLikeRepository.findByReview(review);
         if (existingLike.isPresent()) {
             reviewLikeRepository.delete(existingLike.get()); // 좋아요 제거
             review.decrementLikeCount(); // Review 엔티티 내 좋아요 수 감소 메서드
         } else {
             ReviewLike newLike = new ReviewLike();
             newLike.setReview(review);
-            newLike.setMember(member);
+//            newLike.setMember(member);
             reviewLikeRepository.save(newLike); // 좋아요 추가
             review.incrementLikeCount(); // Review 엔티티 내 좋아요 수 증가 메서드
         }

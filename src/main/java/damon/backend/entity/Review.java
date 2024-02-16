@@ -74,10 +74,10 @@ public class Review extends BaseEntity {
     }
 
     // 생성자 메서드
-    public static Review create(ReviewRequest request, Member member) {
+    public static Review create(ReviewRequest request) {
         Review review = new Review();
         populateReviewFields(review, request);
-        review.member = member; // Member 설정은 create 시에만 수행
+//        review.member = member; // Member 설정은 create 시에만 수행
         return review;
     }
 

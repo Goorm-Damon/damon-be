@@ -13,7 +13,7 @@ import java.util.List;
 public class ReviewListResponse {
 
     private Long id;
-    private String name;
+//    private String name;
     private String state;
     private LocalDateTime createdDate;
 
@@ -41,7 +41,7 @@ public class ReviewListResponse {
         return new ReviewListResponse(
 
                 review.getId(),
-                review.getMember() != null ? review.getMember().getName() : null,
+//                review.getMember() != null ? review.getMember().getName() : null,
                 state,
                 review.getCreatedDate(),
                 review.getViewCount(),

@@ -28,10 +28,10 @@ public class ReviewCommentService implements CommentStructureOrganizer {
     private final MemberRepository memberRepository;
 
     // 댓글 등록
-    public ReviewResponse postComment(Long reviewId, ReviewCommentRequest request, String providerName) {
+    public ReviewResponse postComment(Long reviewId, ReviewCommentRequest request) {
         // 사용자 조회
-        Member member = memberRepository.findByProviderName(providerName)
-                .orElseThrow(ReviewException::memberNotFound);
+//        Member member = memberRepository.findByProviderName(providerName)
+//                .orElseThrow(ReviewException::memberNotFound);
 
         // 리뷰 조회
         Review review = reviewRepository.findById(reviewId)
@@ -46,7 +46,7 @@ public class ReviewCommentService implements CommentStructureOrganizer {
 
         }
 
-        ReviewComment newComment = ReviewComment.createContent(request.getContent(), review, member, parentComment);
+        ReviewComment newComment = ReviewComment.createContent(request.getContent(), review, parentComment);
 
         reviewCommentRepository.save(newComment);
 
@@ -58,17 +58,17 @@ public class ReviewCommentService implements CommentStructureOrganizer {
     }
 
     // 댓글 수정
-    public ReviewResponse updateComment(Long commentId, ReviewCommentRequest request, String providerName) {
+    public ReviewResponse updateComment(Long commentId, ReviewCommentRequest request) {
         ReviewComment comment = reviewCommentRepository.findById(commentId)
                 .orElseThrow(ReviewException::commentNotFound);
 
         // 사용자 조회
-        Member member = memberRepository.findByProviderName(providerName)
-                .orElseThrow(ReviewException::memberNotFound);
+//        Member member = memberRepository.findByProviderName(providerName)
+//                .orElseThrow(ReviewException::memberNotFound);
 
-        if (!comment.getReview().getMember().getProviderName().equals(providerName)) {
-            throw ReviewException.unauthorized();
-        }
+//        if (!comment.getReview().getMember().getProviderName().equals(providerName)) {
+//            throw ReviewException.unauthorized();
+//        }
 
         // 댓글 업데이트 로직
         comment.updateContent(request.getContent());
@@ -90,17 +90,17 @@ public class ReviewCommentService implements CommentStructureOrganizer {
     }
 
     // 댓글 삭제
-    public void deleteComment(Long commentId, String providerName) {
+    public void deleteComment(Long commentId) {
         ReviewComment comment = reviewCommentRepository.findById(commentId)
                 .orElseThrow(ReviewException::commentNotFound);
 
-        // 사용자 조회
-        Member member = memberRepository.findByProviderName(providerName)
-                .orElseThrow(ReviewException::memberNotFound);
+//        // 사용자 조회
+//        Member member = memberRepository.findByProviderName(providerName)
+//                .orElseThrow(ReviewException::memberNotFound);
 
-        if (!comment.getReview().getMember().getProviderName().equals(providerName)) {
-            throw ReviewException.unauthorized();
-        }
+//        if (!comment.getReview().getMember().getProviderName().equals(providerName)) {
+//            throw ReviewException.unauthorized();
+//        }
 
         // 부모 댓글 삭제 시 대댓글도 함께 삭제
         if (comment.getParent() == null) {

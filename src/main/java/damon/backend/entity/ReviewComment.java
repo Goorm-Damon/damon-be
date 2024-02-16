@@ -78,11 +78,11 @@ public class ReviewComment extends BaseEntity{
     }
 
     // 내용과 부모 댓글 설정 메서드
-    public static ReviewComment createContent(String content, Review review, Member member, ReviewComment parent) {
+    public static ReviewComment createContent(String content, Review review, ReviewComment parent) {
         ReviewComment comment = new ReviewComment(); // 직접 인스턴스 생성을 위한 변경 필요
         comment.setContent(content);
         comment.setReview(review);
-        comment.setMember(member);
+//        comment.setMember(member);
         comment.setParent(parent);
         return comment;
     }
