@@ -18,7 +18,7 @@ public class ReviewImageController {
 
     private final AwsS3Service awsS3Service;
 
-    @PostMapping("/image/upload")
+    @PostMapping("/api/upload")
     public ResponseEntity<Map<String, Object>> imageUpload(@RequestParam("upload") MultipartFile file) {
         Map<String, Object> responseData = new HashMap<>();
 

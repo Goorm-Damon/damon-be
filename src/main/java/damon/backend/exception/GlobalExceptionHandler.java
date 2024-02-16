@@ -14,8 +14,13 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(Exception.class)
-    public Result<Void> handleException(Exception e) {
+    @ExceptionHandler(EntityNotFoundException.class)
+    public Result<Void> handleException(EntityNotFoundException e) {
+        return Result.error(e.getMessage());
+    }
+
+    @ExceptionHandler(PermissionDeniedException.class)
+    public Result<Void> handleException(PermissionDeniedException e) {
         return Result.error(e.getMessage());
     }
 
