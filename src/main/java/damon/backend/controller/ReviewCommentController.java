@@ -1,12 +1,17 @@
 package damon.backend.controller;
 
+//import damon.backend.dto.login.CustomOAuth2User;
+
 import damon.backend.dto.request.ReviewCommentRequest;
 import damon.backend.dto.response.ReviewResponse;
+import damon.backend.jwt.JwtTokenProvider;
 import damon.backend.service.ReviewCommentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class ReviewCommentController {
     private final ReviewCommentService reviewCommentService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     // 댓글 등록
     @PostMapping("/{reviewId}/comments")
@@ -25,9 +31,13 @@ public class ReviewCommentController {
     @ApiResponse(responseCode = "200", description = "댓글 등록 성공")
     public ReviewResponse postComment(
             @Schema(description = "리뷰 인덱스", example="1")
+            @Valid
             @PathVariable Long reviewId,
-            @RequestBody ReviewCommentRequest reviewCommentRequest) {
-        return reviewCommentService.postComment(reviewId, reviewCommentRequest);
+            @RequestBody ReviewCommentRequest request,
+            HttpServletRequest httpServletRequest) {
+        String token = httpServletRequest.getHeader("Authorization").substring("Bearer ".length());
+
+        return reviewCommentService.postComment(reviewId, request, token);
     }
 
 
@@ -39,16 +49,20 @@ public class ReviewCommentController {
             @Schema(description = "리뷰 인덱스", example="1")
             @PathVariable Long reviewId,
             @Schema(description = "댓글 인덱스", example="1")
+            @Valid
             @PathVariable Long commentId,
-            @RequestBody ReviewCommentRequest request) {
+            @RequestBody ReviewCommentRequest request,
+            HttpServletRequest httpServletRequest) {
+        String token = httpServletRequest.getHeader("Authorization").substring("Bearer ".length());
+
 
         if (request.getContent() != null && !request.getContent().trim().isEmpty()) {
-            ReviewResponse updatedReview = reviewCommentService.updateComment(commentId, request);
+            ReviewResponse updatedReview = reviewCommentService.updateComment(commentId, request, token);
             return ResponseEntity.ok(updatedReview); // 수정된 리뷰의 최신 상태를 반환
         }
         return ResponseEntity.badRequest().build();
 
-       }
+    }
 
     // 댓글 삭제
     @DeleteMapping("/{reviewId}/comments/{commentId}")
@@ -56,9 +70,12 @@ public class ReviewCommentController {
     @ApiResponse(responseCode = "200", description = "댓글 삭제 성공")
     public ResponseEntity<Void> deleteComment(
             @Schema(description = "댓글 인덱스", example="1")
-            @PathVariable Long commentId
-    ) { //@RequestParam Long memberId 추후에 추가
-        reviewCommentService.deleteComment(commentId);
+            @PathVariable Long commentId,
+            HttpServletRequest httpServletRequest
+    ) {
+        String token = httpServletRequest.getHeader("Authorization").substring("Bearer ".length());
+
+        reviewCommentService.deleteComment(commentId, token);
         return ResponseEntity.ok().build(); // HTTP 200 OK 응답
     }
 

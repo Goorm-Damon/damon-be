@@ -1,50 +1,37 @@
 package damon.backend.entity;
 
+import damon.backend.dto.request.ReviewRequest;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
-@Getter @Setter
-@NoArgsConstructor
+@Getter
+@Table(name = "review")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class Review {
-    //not null 이 너무 많아서 기본값을 not null로 설정
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
-    public @interface NotNull {
-        boolean nullable() default false;
-    }
+public class Review extends BaseEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="review_id")
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "review_id")
     private Long id;
-    private ZonedDateTime createTime;
-    private ZonedDateTime updateTime;
-
-    @PrePersist
-    protected void onCreate() {
-        createTime = ZonedDateTime.now();
-        updateTime = createTime; // 생성 시 updateTime도 초기화
-    }
 
     private long viewCount;
+    private Long likeCount;
+    private boolean isEdited = false; // 변경 여부를 추적하는 필드
 
     private String title;
     private LocalDate startDate;
     private LocalDate endDate;
-
 
     @Enumerated(EnumType.STRING)
     private Area area;
@@ -55,7 +42,7 @@ public class Review {
     private List<String> suggests = new ArrayList<>();
 
     @ElementCollection
-    @Column(nullable = true)
+    @Column
     private List<String> freeTags = new ArrayList<>();
 
     @Column(columnDefinition = "TEXT")
@@ -72,18 +59,73 @@ public class Review {
 
     //리뷰좋아요 매핑
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ReviewLike> reviewLikes = new ArrayList<>();
+    private Set<ReviewLike> reviewLikes = new HashSet<>();
 
     //리뷰댓글 매핑
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReviewComment> reviewComments = new ArrayList<>();
 
     //연관관계 매핑 메서드
-    public void setMember(Member member){
+    public void setMember(Member member) {
         this.member = member;
-        if (member != null ) {
+        if (member != null) {
             member.getReviews().add(this);
         }
+    }
+
+
+    // 조회수 증가 메소드
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
+
+    // 생성자 메서드
+    public static Review create(ReviewRequest request, Member member) {
+        Review review = new Review();
+        populateReviewFields(review, request);
+        review.member = member; // Member 설정은 create 시에만 수행
+        return review;
+    }
+
+    // 업데이트 메서드
+    public void update(ReviewRequest request) {
+        populateReviewFields(this, request);
+        this.isEdited = true; // 업데이트 시 isEdited를 true로 설정
+    }
+
+    // 공통 필드 설정 메서드
+    private static void populateReviewFields(Review review, ReviewRequest request) {
+        review.title = request.getTitle();
+        review.startDate = request.getStartDate();
+        review.endDate = request.getEndDate();
+        review.area = request.getArea();
+        review.cost = request.getCost();
+        review.suggests = request.getSuggests();
+        review.freeTags = request.getFreeTags();
+        review.content = request.getContent();
+
+    }
+
+    public void incrementLikeCount() {
+        if (this.likeCount == null) {
+            this.likeCount = 1L;
+        } else {
+            this.likeCount++;
+        }
+    }
+
+    public void decrementLikeCount() {
+        if (this.likeCount == null || this.likeCount <= 0) {
+            this.likeCount = 0L;
+        } else {
+            this.likeCount--;
+        }
+    }
+
+    // 이미지 추가 메서드
+    public void addImage(String url) {
+        ReviewImage newImage = ReviewImage.createImage(url, this); // URL을 받아 ReviewImage 객체 생성
+        this.reviewImages.add(newImage); // 현재 리뷰의 이미지 목록에 추가
     }
 
 }

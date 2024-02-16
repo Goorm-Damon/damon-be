@@ -2,70 +2,69 @@ package damon.backend.dto.response;
 
 import damon.backend.entity.Area;
 import damon.backend.entity.Review;
+import damon.backend.entity.ReviewImage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @AllArgsConstructor
 public class ReviewResponse {
 
     private Long id;
-
-    private ZonedDateTime createTime;
+    private String name;
     private String state;
-    private long likeCount; // 좋아요 수
+    private LocalDateTime createdDate;
+
     private long viewCount; // 조회수
+    private long likeCount; // 좋아요 수
 
     private String title;
+    private Area area;
     private LocalDate startDate;
     private LocalDate endDate;
-    private Area area;
+
     private Long cost;
     private List<String> suggests;
     private List<String> freeTags;
 
+    private List<String> imageUrls; // 이미지 URL 리스트 추가
     private String content;
 
     private List<ReviewCommentResponse> reviewComments; // 댓글 목록 추가
 
-
-    //정적 팩토리 메서드
-    public static ReviewResponse from(Review review,  List<ReviewCommentResponse> organizedComments) {
-
-        long likeCount = review.getReviewLikes().size();
+    // 정적 팩토리 메서드
+    public static ReviewResponse from(Review review, List<ReviewCommentResponse> organizedComments) {
         long viewCount = review.getViewCount(); // 조회수
+        long likeCount = review.getReviewLikes().size();
 
-        String state = ""; // 초기 상태값은 빈 문자열로 설정
+        String state = review.isEdited() ? "편집됨" : ""; // isEdited 값에 따라 상태 설정
 
-        // updateTime이 null이 아니고, createTime과 updateTime이 다를 때 state를 "편집됨"으로 설정
-        if (review.getUpdateTime() != null && !review.getCreateTime().isEqual(review.getUpdateTime())) {
-            state = "편집됨";
-        }
+        List<String> imageUrls = review.getReviewImages().stream()
+                .map(ReviewImage::getUrl)
+                .collect(Collectors.toList());
 
         return new ReviewResponse(
-
                 review.getId(),
-                review.getCreateTime(),
+                review.getMember() != null ? review.getMember().getName() : null,
                 state,
+                review.getCreatedDate(),
+                viewCount,
                 likeCount,
-                review.getViewCount(),
                 review.getTitle(),
+                review.getArea(),
                 review.getStartDate(),
                 review.getEndDate(),
-                review.getArea(),
                 review.getCost(),
                 review.getSuggests(),
                 review.getFreeTags(),
-//                imageUrls,
+                imageUrls, // 이미지 URL 리스트
                 review.getContent(),
                 organizedComments // 계층적으로 구조화된 댓글 목록
         );
     }
 }
-
-
-
