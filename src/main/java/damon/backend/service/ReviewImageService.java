@@ -4,6 +4,7 @@ import damon.backend.entity.Review;
 import damon.backend.entity.ReviewImage;
 import damon.backend.exception.ReviewException;
 import damon.backend.repository.ReviewImageRepository;
+import damon.backend.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,47 +21,37 @@ import java.util.List;
 public class ReviewImageService {
     private final ReviewImageRepository reviewImageRepository;
     private final AwsS3Service awsS3Service;
+    private final ReviewRepository reviewRepository;
 
-    // 리뷰 생성 시 이미지 처리
-    public List<ReviewImage> postImage(Review review, List<MultipartFile> images) {
-        List<ReviewImage> savedImages = new ArrayList<>();
-        try {
-            if (images != null && !images.isEmpty()) {
-                for (MultipartFile file : images) {
-                    String url = awsS3Service.uploadImage(file); // S3에 이미지 업로드
-                    ReviewImage newImage = ReviewImage.createImage(url, review); // 이미지 생성
-                    savedImages.add(reviewImageRepository.save(newImage)); // DB에 저장
-                }
+
+    // 리뷰 생성 및 이미지 업로드 통합 처리
+    public void attachImagesToReview(Review review, List<MultipartFile> images) throws IOException {
+        if (images != null && !images.isEmpty()) {
+            for (MultipartFile file : images) {
+                // dirType을 기반으로 이미지 업로드 처리
+                String dirType = "review"; // 또는 "community" 등 context에 맞게 설정
+                String imageUrl = awsS3Service.uploadFiles(file, dirType);
+
+                ReviewImage reviewImage = ReviewImage.createImage(imageUrl, review);
+                reviewImageRepository.save(reviewImage);
             }
-            return savedImages; // 저장된 이미지 리스트 반환
-        } catch (IOException e) {
-            throw ReviewException.imageUploadFailed();
-        } catch (MaxUploadSizeExceededException e) {
-            throw ReviewException.imageSizeExceeded();
         }
     }
 
-    // 리뷰 업데이트 및 이미지 삭제 처리
+    // 이미지 삭제 처리 로직
+    public void deleteReviewImage(Long reviewImageId) {
+        reviewImageRepository.findById(reviewImageId).ifPresent(reviewImage -> {
+            // S3에서 이미지 삭제
+            String fileName = extractFileNameFromUrl(reviewImage.getUrl());
+            awsS3Service.deleteImageFromS3(fileName);
 
-    public void handleImage(Review review, List<MultipartFile> newImages, List<Long> imageIdsToDelete) {
-        // 삭제할 이미지 처리
-        deleteReviewImage(imageIdsToDelete);
-
-        // 새 이미지 추가
-        postImage(review, newImages);
+            reviewImageRepository.delete(reviewImage);
+        });
     }
 
-    // 이미지 삭제
-    private void deleteReviewImage(List<Long> imageIdsToDelete) {
-        if (imageIdsToDelete != null && !imageIdsToDelete.isEmpty()) {
-            List<ReviewImage> imagesToDelete = reviewImageRepository.findAllById(imageIdsToDelete);
-            imagesToDelete.forEach(image -> {
-                // S3에서 이미지 파일 삭제
-                awsS3Service.deleteImage(image.getUrl().substring(image.getUrl().lastIndexOf("/") + 1));
-                // DB에서 이미지 정보 삭제
-                reviewImageRepository.delete(image);
-            });
-        }
+    private String extractFileNameFromUrl(String fileUrl) {
+        // URL에서 파일 이름을 추출하는 로직 구현
+        // 예: "https://s3.amazonaws.com/bucket-name/review-images/uuid-filename.jpg"에서 "review-images/uuid-filename.jpg" 추출
+        return fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
     }
-
 }

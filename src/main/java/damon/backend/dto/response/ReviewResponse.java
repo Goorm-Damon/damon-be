@@ -49,6 +49,7 @@ public class ReviewResponse {
 
         String state = review.isEdited() ? "편집됨" : ""; // isEdited 값에 따라 상태 설정
 
+        // 이미지 URL 추출
         List<String> imageUrls = review.getReviewImages().stream()
                 .map(ReviewImage::getUrl)
                 .collect(Collectors.toList());

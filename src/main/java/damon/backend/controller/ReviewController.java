@@ -74,7 +74,7 @@ public class ReviewController {
     }
 
     //게시글 수정
-    @PutMapping("/{reviewId}")
+    @PutMapping( "/{reviewId}")
     @Operation(summary = "내 리뷰 수정", description = "내 리뷰를 수정합니다.")
     @ApiResponse(responseCode = "200", description = "리뷰 수정 성공")
     public ResponseEntity<ReviewResponse> updateReview(
@@ -82,15 +82,15 @@ public class ReviewController {
             @Valid
             @PathVariable Long reviewId,
             @RequestParam("images") Optional<List<MultipartFile>> newImages,
-            @RequestParam("deleteImages") Optional<List<Long>> deleteImageIds,
+//            @RequestParam("deleteImages") Optional<List<Long>> deleteImageIds,
             @RequestBody ReviewRequest reviewRequest,
             @AuthToken TokenDto tokenDto){
         ReviewResponse updatedReview = reviewService.updateReview(
                 reviewId,
                 reviewRequest,
-                newImages.orElse(new ArrayList<>()), deleteImageIds.orElse(new ArrayList<>()),
+                newImages.orElse(new ArrayList<>()),
                 tokenDto.getIdentifier()
-        ); //memberId 추후에 추가
+        );
         return ResponseEntity.ok(updatedReview);
     }
 

@@ -6,9 +6,11 @@ import damon.backend.dto.response.ReviewListResponse;
 import damon.backend.dto.response.ReviewResponse;
 import damon.backend.entity.Area;
 import damon.backend.entity.Review;
+import damon.backend.entity.ReviewImage;
 import damon.backend.entity.ReviewLike;
 import damon.backend.entity.user.User;
 import damon.backend.exception.ReviewException;
+import damon.backend.repository.ReviewImageRepository;
 import damon.backend.repository.ReviewLikeRepository;
 import damon.backend.repository.ReviewRepository;
 import damon.backend.repository.user.UserRepository;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -35,19 +38,32 @@ public class ReviewService {
     private final ReviewLikeRepository reviewLikeRepository;
     private final UserRepository userRepository;
     private final CommentStructureOrganizer commentStructureOrganizer;
-    private final ReviewImageService reviewImageService;
+    private final ReviewImageRepository reviewImageRepository;
+    private final AwsS3Service awsS3Service;
 
     //게시글 등록
+    @Transactional
     public ReviewResponse postReview(ReviewRequest request, List<MultipartFile> images, String identifier) {
         User user = userRepository.findByIdentifier(identifier).orElseThrow(ReviewException::memberNotFound);
 
         Review review = Review.create(request, user);
-        review = reviewRepository.save(review); // 리뷰 저장
 
         // 이미지 처리
-        if (!images.isEmpty()) {
-            reviewImageService.postImage(review, images);
+        if (images != null && !images.isEmpty()) {
+            for (MultipartFile image : images) {
+                try {
+                    String dirType = "review"; // 디렉토리 타입 설정
+                    String imageUrl = awsS3Service.uploadFiles(image, dirType); // AWS S3에 이미지 업로드, 예외 처리 필요
+                    ReviewImage reviewImage = new ReviewImage(imageUrl, review);
+                    review.getReviewImages().add(reviewImage);
+                } catch (IOException e) {
+                    throw new RuntimeException("Image upload failed", e);
+                }
+            }
         }
+
+        reviewRepository.save(review); // 변경된 Review 엔티티 및 연결된 이미지 정보 저장
+
 
         List<ReviewCommentResponse> emptyCommentsList = new ArrayList<>(); // 새 리뷰에는 댓글이 없으므로 빈 리스트 생성
         return ReviewResponse.from(review, emptyCommentsList); // 저장된 리뷰와 빈 댓글 목록을 전달
@@ -96,7 +112,8 @@ public class ReviewService {
 
 
     // 게시글 수정
-    public ReviewResponse updateReview(Long reviewId, ReviewRequest request, List<MultipartFile> newImages, List<Long> imageIdsToDelete, String identifier)  {
+    @Transactional
+    public ReviewResponse updateReview(Long reviewId, ReviewRequest request, List<MultipartFile> newImages, String identifier) {
 
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(ReviewException::reviewNotFound);
@@ -110,10 +127,23 @@ public class ReviewService {
         // 리뷰 업데이트
         review.update(request);
 
-        // 이미지 처리: 새 이미지 추가 및 기존 이미지 삭제
-        reviewImageService.handleImage(review, newImages, imageIdsToDelete);
+        // 새 이미지 처리
+        if (newImages != null && !newImages.isEmpty()) {
+            for (MultipartFile image : newImages) {
+                try {
+                    // 디렉토리 타입 설정 (예: "review")
+                    String dirType = "review";
+                    String imageUrl = awsS3Service.uploadFiles(image, dirType); // AWS S3에 이미지 업로드 및 URL 반환
+                    ReviewImage reviewImage = new ReviewImage(imageUrl, review); // ReviewImage 인스턴스 생성 및 Review 인스턴스에 추가
+                    review.getReviewImages().add(reviewImage);
+                } catch (IOException e) {
+                    // IOException 처리, 예를 들어 로그 기록, 사용자 정의 예외로 변환 등
+                    throw new RuntimeException("Failed to upload image", e);
+                }
+            }
+        }
 
-        review = reviewRepository.save(review);
+        reviewRepository.save(review);
 
         // 댓글 구조를 다시 조직화
         List<ReviewCommentResponse> organizedComments = commentStructureOrganizer.organizeCommentStructure(reviewId);

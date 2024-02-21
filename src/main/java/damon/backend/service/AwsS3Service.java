@@ -7,11 +7,16 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetUrlRequest;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -25,40 +30,80 @@ public class AwsS3Service {
     @Value("${cloud.aws.s3.review-prefix}")
     private String reviewPrefix;
 
-    public String uploadImage(MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
-            throw new IllegalStateException("Cannot upload empty file");
+    @Value("${cloud.aws.s3.community-prefix}")
+    private String communityPrefix;
+
+
+    public String uploadFiles(MultipartFile multipartFile, String dirType) throws IOException {
+        String dirPrefix = "";
+        switch (dirType) {
+            case "review":
+                dirPrefix = reviewPrefix;
+                break;
+            case "community":
+                dirPrefix = communityPrefix;
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid directory type");
         }
 
-        String fileName = file.getOriginalFilename();
-        String ext = fileName.substring(fileName.lastIndexOf("."));
-        String uuidFileName = UUID.randomUUID().toString() + ext;
+        File uploadFile = convert(multipartFile).orElseThrow(() ->
+                new IllegalArgumentException("MultipartFile -> File convert fail"));
+        String fileName = dirPrefix + UUID.randomUUID() + "-" + multipartFile.getOriginalFilename();
+        return upload(uploadFile, fileName);
+    }
 
+    private String upload(File uploadFile, String filePath) {
+        String uploadImageUrl = putS3(uploadFile, filePath);
+        removeNewFile(uploadFile);
+        return uploadImageUrl;
+    }
+
+    private String putS3(File uploadFile, String fileName) {
         s3Client.putObject(PutObjectRequest.builder()
                         .bucket(bucket)
-                        .key(reviewPrefix + uuidFileName)
+                        .key(fileName)
+                        .acl(ObjectCannedACL.PUBLIC_READ)
                         .build(),
-                RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
-
-        return s3Client.utilities().getUrl(builder -> builder.bucket(bucket).key(reviewPrefix + uuidFileName)).toExternalForm();
+                RequestBody.fromFile(uploadFile));
+        return s3Client.utilities().getUrl(GetUrlRequest.builder().bucket(bucket).key(fileName).build()).toExternalForm();
     }
 
-    public List<String> uploadImages(List<MultipartFile> files) throws IOException {
-        List<String> imageUrls = new ArrayList<>();
-        for (MultipartFile file : files) {
-            String imageUrl = uploadImage(file);
-            imageUrls.add(imageUrl);
+
+    private void removeNewFile(File targetFile) {
+        if (!targetFile.delete()) {
+            System.out.println("Failed to delete the file: " + targetFile.getPath());
         }
-        return imageUrls;
     }
 
-    // AwsS3Service 내 이미지 삭제 메서드
-    public void deleteImage(String fileKey) {
-        s3Client.deleteObject(DeleteObjectRequest.builder()
-                .bucket(bucket)
-                .key(fileKey)
-                .build());
+    private Optional<File> convert(MultipartFile file) throws IOException {
+        // 파일 변환 로직에 사용할 임시 디렉터리 경로
+        String tempDirPath = System.getProperty("java.io.tmpdir");
+        File convertFile = new File(tempDirPath + "/" + UUID.randomUUID() + "-" + file.getOriginalFilename());
+
+        if (convertFile.createNewFile()) {
+            try (FileOutputStream fos = new FileOutputStream(convertFile)) {
+                fos.write(file.getBytes());
+            } catch (IOException e) {
+                return Optional.empty();
+            }
+            return Optional.of(convertFile);
+        }
+
+        return Optional.empty();
     }
 
-
+    // AWS S3에서 특정 파일을 삭제하는 메서드
+    public void deleteImageFromS3(String fileKey) {
+        try {
+            s3Client.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(fileKey)
+                    .build());
+            System.out.println("Successfully deleted " + fileKey + " from S3 bucket " + bucket);
+        } catch (Exception e) {
+            System.err.println("Error occurred while trying to delete " + fileKey + " from S3 bucket " + bucket);
+            e.printStackTrace();
+        }
+    }
 }
