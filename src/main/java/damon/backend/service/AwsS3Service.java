@@ -102,8 +102,6 @@ public class AwsS3Service {
         String bucketUrlPrefix = "https://goorm-damon-s3.s3.ap-northeast-2.amazonaws.com/";
         String fileKey = imageUrl.replace(bucketUrlPrefix, ""); // 이제 fileKey는 'review/...' 형식입니다.
 
-//        String[] parts = imageUrl.split("review/");
-//        String fileKey = parts[1];
         Log.info("삭제할 이미지 파일키: " + fileKey);
 
         // S3 객체 삭제 요청 전송 및 로깅
