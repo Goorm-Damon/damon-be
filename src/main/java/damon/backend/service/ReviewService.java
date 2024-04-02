@@ -129,7 +129,7 @@ public class ReviewService {
 
             for (MultipartFile file : images) {
                 try {
-                    String imageUrl = awsS3Service.uploadImage(file, "review");
+                    String imageUrl = awsS3Service.uploadImage(file);
                     imageUrls.add(imageUrl);
                 } catch (IOException e) {
                     throw new ImageCountExceededException();
