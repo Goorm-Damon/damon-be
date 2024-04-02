@@ -15,7 +15,9 @@ import java.util.stream.Collectors;
 public class ReviewListResponse {
 
     private Long id;
+    private String identifier;
     private String name;
+    private String profileImage;
     private String state;
     private String createdDate;
 
@@ -49,7 +51,9 @@ public class ReviewListResponse {
         return new ReviewListResponse(
 
                 review.getId(),
+                review.getUser() != null ? review.getUser().getIdentifier() : null, // 사용자 Identifier 추가
                 review.getUser() != null ? review.getUser().getNickname() : null,
+                review.getUser() != null ? review.getUser().getProfile() : null, // 프로필 이미지 URL 추가
                 state,
                 review.getCreatedDate().format(DATE_TIME_FORMATTER),
                 review.getViewCount(),
