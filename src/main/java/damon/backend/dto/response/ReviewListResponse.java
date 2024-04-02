@@ -46,21 +46,21 @@ public class ReviewListResponse {
 
         String mainImage = !review.getReviewImages().isEmpty() ? review.getReviewImages().get(0).getUrl() : null;
 
-            return new ReviewListResponse(
+        return new ReviewListResponse(
 
-                    review.getId(),
-                    review.getUser() != null ? review.getUser().getNickname() : null,
-                    state,
-                    review.getCreatedDate().format(DATE_TIME_FORMATTER),
-                    review.getViewCount(),
-                    review.getLikeCount(),
-                    commentCount,
-                    review.getTitle(),
-                    review.getArea(),
-                    review.getCost(),
-                    review.getSuggests(),
-                    tagValues,
-                    mainImage
-            );
+                review.getId(),
+                review.getUser() != null ? review.getUser().getNickname() : null,
+                state,
+                review.getCreatedDate().format(DATE_TIME_FORMATTER),
+                review.getViewCount(),
+                review.getLikeCount(),
+                commentCount,
+                review.getTitle(),
+                review.getArea(),
+                review.getCost(),
+                review.getSuggests(),
+                tagValues,
+                mainImage
+        );
     }
 }

@@ -14,5 +14,4 @@ public interface ReviewImageRepository  extends JpaRepository<ReviewImage, Long>
 
     Optional<ReviewImage> findByUrlAndReview(String url, Review review);
 
-
 }

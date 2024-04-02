@@ -18,4 +18,3 @@ public interface ReviewCommentRepository extends JpaRepository<ReviewComment, Lo
     @Query("SELECT c FROM ReviewComment c WHERE c.parent.id = :parentId")
     List<ReviewComment> findByParentId(Long parentId);
 }
-

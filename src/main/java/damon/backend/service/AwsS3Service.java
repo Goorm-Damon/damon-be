@@ -1,3 +1,4 @@
+
 package damon.backend.service;
 
 import damon.backend.exception.custom.ImageCountExceededException;
@@ -27,9 +28,8 @@ public class AwsS3Service {
     private String bucket;
     @Value("${cloud.aws.s3.review-prefix}")
     private String reviewPrefix;
-
-//    @Value("${cloud.aws.s3.region.static}")
-//    private String region;
+    @Value("${cloud.aws.s3.community-prefix}")
+    private String communityPrefix;
 
     public class UploadResult {
         private final String fileKey;
@@ -49,36 +49,10 @@ public class AwsS3Service {
         }
     }
 
-//    public UploadResult uploadImage(MultipartFile multipartFile) throws IOException {
-//        String fileName = multipartFile.getOriginalFilename();
-//        String extension = fileName.substring(fileName.lastIndexOf("."));
-//        String fileKey = reviewPrefix + UUID.randomUUID().toString() + extension;
-//
-//        s3Client.putObject(PutObjectRequest.builder()
-//                        .bucket(bucket)
-//                        .key(fileKey)
-//                        .build(),
-//                RequestBody.fromInputStream(multipartFile.getInputStream(), multipartFile.getSize()));
-//
-//        String fileUrl = s3Client.utilities().getUrl(builder -> builder.bucket(bucket).key(fileKey)).toString();
-//
-//        return new UploadResult(fileKey, fileUrl);
-//    }
-//
-//    // 3S 내 이미지 삭제
-//    public void deleteImage(String fileKey) {
-//        s3Client.deleteObject(DeleteObjectRequest.builder()
-//                .bucket(bucket)
-//                .key(fileKey)
-//                .build());
-//    }
-
-
-    public String uploadImage(MultipartFile file) throws IOException {
+    public String uploadImage(MultipartFile file, String prefix) throws IOException {
         if (file.isEmpty()) {
             throw new IllegalStateException("Cannot upload empty file");
         }
-
 
         String fileName = file.getOriginalFilename();
         String ext = fileName.substring(fileName.lastIndexOf("."));
@@ -86,15 +60,13 @@ public class AwsS3Service {
 
         s3Client.putObject(PutObjectRequest.builder()
                         .bucket(bucket)
-                        .key(reviewPrefix + uuidFileName)
+                        .key(prefix + uuidFileName)
                         .build(),
                 RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
-        String result = s3Client.utilities().getUrl(builder -> builder.bucket(bucket).key(reviewPrefix + uuidFileName)).toString();
-        Log.info("AwsS3Service uploadImage return:" + result);
-        return result;
+        return s3Client.utilities().getUrl(builder -> builder.bucket(bucket).key(prefix + uuidFileName)).toString();
     }
 
-    public List<String> uploadImages(List<MultipartFile> files) throws IOException {
+    public List<String> uploadImages(List<MultipartFile> files, String prefix) throws IOException {
         List<String> imageUrls = new ArrayList<>();
 
         final int MAX_IMAGE_COUNT = 10;
@@ -110,7 +82,7 @@ public class AwsS3Service {
             }
 
             try {
-                String imageUrl = uploadImage(file);
+                String imageUrl = uploadImage(file, prefix);
                 imageUrls.add(imageUrl);
             } catch (IOException e) {
 
@@ -125,14 +97,18 @@ public class AwsS3Service {
         Log.info("Received image URL for deletion: " + imageUrl);
 
         // 파일 키 추출 및 로깅
-        String[] parts = imageUrl.split("review/");
-        String fileKey = parts[1];
-//        String fileKey = imageUrl.substring(imageUrl.indexOf(reviewPrefix));
-        Log.info("Extracted file key for deletion: " + fileKey);
+        // 아래는 'https://goorm-damon-s3.s3.ap-northeast-2.amazonaws.com/'을 제거하여
+        // 실제 버킷 내의 객체 키를 정확하게 추출합니다.
+        String bucketUrlPrefix = "https://goorm-damon-s3.s3.ap-northeast-2.amazonaws.com/";
+        String fileKey = imageUrl.replace(bucketUrlPrefix, ""); // 이제 fileKey는 'review/...' 형식입니다.
+
+//        String[] parts = imageUrl.split("review/");
+//        String fileKey = parts[1];
+        Log.info("삭제할 이미지 파일키: " + fileKey);
 
         // S3 객체 삭제 요청 전송 및 로깅
         try {
-            Log.info("Sending request to delete object from S3: " + fileKey);
+            Log.info("삭제할 이미지 요청중입니다:: " + fileKey);
             s3Client.deleteObject(DeleteObjectRequest.builder()
                     .bucket(bucket)
                     .key(fileKey)
@@ -142,27 +118,5 @@ public class AwsS3Service {
             Log.error("Error occurred while deleting object from S3: " + fileKey);
             throw e;
         }
-    }
-//    public void deleteImageByUrl(String imageUrl) {
-//        // URL에서 객체의 키를 추출
-//        String fileKey = imageUrl.substring(imageUrl.indexOf(bucket) + bucket.length() + 1);
-//
-//        try {
-//            // AWS SDK의 deleteObject 메서드를 사용하여 객체 삭제
-//            s3Client.deleteObject(DeleteObjectRequest.builder()
-//                    .bucket(bucket)
-//                    .key(fileKey)
-//                    .build());
-//            Log.info("Object deleted successfully: " + fileKey);
-//        } catch (Exception e) {
-//            Log.error("Error occurred while deleting object: " + fileKey);
-//            throw new RuntimeException("Error deleting object from S3", e);
-//        }
-//    }
-
-
-
-    private String extractFileKeyFromUrl(String imageUrl) {
-        return imageUrl.substring(imageUrl.indexOf(bucket) + bucket.length() + 1);
     }
 }
