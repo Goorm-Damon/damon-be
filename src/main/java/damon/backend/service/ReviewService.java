@@ -236,15 +236,13 @@ public class ReviewService {
     }
 
     // 내 리뷰 조회
-    /*@Transactional(readOnly = true)
-    public Page<ReviewListResponse> searchMyReview(String identifier) {
+    @Transactional(readOnly = true)
+    public Page<ReviewListResponse> searchMyReviews(String identifier, int page, int pageSize) {
         User user = userRepository.findByIdentifier(identifier).orElseThrow(UserNotFoundException::new);
-        Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "id"));
-        Page<Review> myReviews = reviewLikeRepository.findMyReviews(user, pageable);
 
-        List<Review> myReviews = reviewRepository.findMyReviews(user.getId());
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+
+        Page<Review> myReviews = reviewRepository.findMyReviews(identifier, pageable);
         return myReviews.map(ReviewListResponse::from);
     }
-
-     */
 }

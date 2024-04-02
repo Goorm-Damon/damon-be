@@ -34,7 +34,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long>,ReviewRepo
     Page<Review> findTopReviewsByLikes(Pageable pageable);
 
     // 내리뷰 조회
-    @Query("SELECT r FROM Review r JOIN FETCH r.user u WHERE u.id = :userId ORDER BY r.id DESC")
-    Page<Review> findMyReviews(Pageable pageable);
+    @Query("SELECT r FROM Review r JOIN r.user u WHERE u.identifier = :identifier ORDER BY r.id DESC")
+    Page<Review> findMyReviews(@Param("identifier") String identifier, Pageable pageable);
+
 
 }

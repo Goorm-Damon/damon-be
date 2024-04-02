@@ -204,7 +204,7 @@ public class ReviewController {
     }
 
     // 내 게시글 목록 조회
-    /*@GetMapping("/my/list")
+    @GetMapping("/my/list")
     @Operation(summary = "내 리뷰 조회", description = "내가 작성한 리뷰를 조회합니다.")
     @ApiResponse(responseCode = "200", description = "내 리뷰 조회 성공")
     public Result<Page<ReviewListResponse>> searchMyReviewList(
@@ -215,9 +215,7 @@ public class ReviewController {
             @Schema(description = "한 페이지 당 보여질 리뷰 개수", example="10")
             @RequestParam("pageSize") int pageSize
     ){
-        Page<ReviewListResponse> myReviews = reviewService.searchMyReview(page, pageSize);
+        Page<ReviewListResponse> myReviews = reviewService.searchMyReviews(identifier, page, pageSize);
         return Result.success(myReviews);
     }
-
-     */
 }
