@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-//@RequiredArgsConstructor
+@RequiredArgsConstructor
 public class AwsS3Service {
     private final S3Client s3Client; // S3Client 주입
 
@@ -28,12 +28,14 @@ public class AwsS3Service {
     private String bucket;
     @Value("${cloud.aws.s3.review-prefix}")
     private String reviewPrefix;
+    @Value("${cloud.aws.s3.community-prefix}")
+    private String communityPrefix;
 
-    public AwsS3Service(S3Client s3Client, @Value("${cloud.aws.s3.review-prefix}") String reviewPrefix) {
-        this.s3Client = s3Client;
-        this.reviewPrefix = reviewPrefix;
-        Log.info("Review Prefix: " + reviewPrefix);
-    }
+//    public AwsS3Service(S3Client s3Client, @Value("${cloud.aws.s3.review-prefix}") String reviewPrefix) {
+//        this.s3Client = s3Client;
+//        this.reviewPrefix = reviewPrefix;
+//        Log.info("Review Prefix: " + reviewPrefix);
+//    }
 
     public class UploadResult {
         private final String fileKey;
@@ -53,7 +55,26 @@ public class AwsS3Service {
         }
     }
 
-    public String uploadImage(MultipartFile file) throws IOException {
+//    public String uploadImage(MultipartFile file) throws IOException {
+//        if (file.isEmpty()) {
+//            throw new IllegalStateException("Cannot upload empty file");
+//        }
+//
+//        String fileName = file.getOriginalFilename();
+//        String ext = fileName.substring(fileName.lastIndexOf("."));
+//        String uuidFileName = UUID.randomUUID().toString() + ext;
+//
+//        s3Client.putObject(PutObjectRequest.builder()
+//                        .bucket(bucket)
+//                        .key(reviewPrefix + uuidFileName)
+//                        .build(),
+//                RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+//        String result = s3Client.utilities().getUrl(builder -> builder.bucket(bucket).key(reviewPrefix + uuidFileName)).toString();
+//        Log.info("AwsS3Service uploadImage return:" + result);
+//        return result;
+//    }
+
+    public String uploadImage(MultipartFile file, String prefix) throws IOException {
         if (file.isEmpty()) {
             throw new IllegalStateException("Cannot upload empty file");
         }
@@ -64,15 +85,13 @@ public class AwsS3Service {
 
         s3Client.putObject(PutObjectRequest.builder()
                         .bucket(bucket)
-                        .key(reviewPrefix + uuidFileName)
+                        .key(prefix + uuidFileName)
                         .build(),
                 RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
-        String result = s3Client.utilities().getUrl(builder -> builder.bucket(bucket).key(reviewPrefix + uuidFileName)).toString();
-        Log.info("AwsS3Service uploadImage return:" + result);
-        return result;
+        return s3Client.utilities().getUrl(builder -> builder.bucket(bucket).key(prefix + uuidFileName)).toString();
     }
 
-    public List<String> uploadImages(List<MultipartFile> files) throws IOException {
+    public List<String> uploadImages(List<MultipartFile> files, String prefix) throws IOException {
         List<String> imageUrls = new ArrayList<>();
 
         final int MAX_IMAGE_COUNT = 10;
@@ -88,7 +107,7 @@ public class AwsS3Service {
             }
 
             try {
-                String imageUrl = uploadImage(file);
+                String imageUrl = uploadImage(file, prefix);
                 imageUrls.add(imageUrl);
             } catch (IOException e) {
 
@@ -103,14 +122,18 @@ public class AwsS3Service {
         Log.info("Received image URL for deletion: " + imageUrl);
 
         // 파일 키 추출 및 로깅
-        String[] parts = imageUrl.split("review/");
-        String fileKey = parts[1];
-//        String fileKey = imageUrl.substring(imageUrl.indexOf(reviewPrefix));
-        Log.info("Extracted file key for deletion: " + fileKey);
+        // 아래는 'https://goorm-damon-s3.s3.ap-northeast-2.amazonaws.com/'을 제거하여
+        // 실제 버킷 내의 객체 키를 정확하게 추출합니다.
+        String bucketUrlPrefix = "https://goorm-damon-s3.s3.ap-northeast-2.amazonaws.com/";
+        String fileKey = imageUrl.replace(bucketUrlPrefix, ""); // 이제 fileKey는 'review/...' 형식입니다.
+
+//        String[] parts = imageUrl.split("review/");
+//        String fileKey = parts[1];
+        Log.info("삭제할 이미지 파일키: " + fileKey);
 
         // S3 객체 삭제 요청 전송 및 로깅
         try {
-            Log.info("Sending request to delete object from S3: " + fileKey);
+            Log.info("삭제할 이미지 요청중입니다:: " + fileKey);
             s3Client.deleteObject(DeleteObjectRequest.builder()
                     .bucket(bucket)
                     .key(fileKey)
