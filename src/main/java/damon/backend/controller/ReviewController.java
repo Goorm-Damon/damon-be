@@ -19,6 +19,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Tag(name = "리뷰 API", description = "리뷰 API")
 @RestController
 @RequiredArgsConstructor
@@ -45,11 +47,10 @@ public class ReviewController {
     public Result<ReviewResponse> postReview(
             @Valid
             @RequestBody ReviewRequest reviewRequest,
-            @RequestParam("images") Optional<List<MultipartFile>> images,
             @Parameter(description = "유저 식별자", required = true, hidden = true)
             @AuthToken String identifier
     ){
-        ReviewResponse review = reviewService.postReview(reviewRequest, images.orElse(new ArrayList<>()), identifier);
+        ReviewResponse review = reviewService.postReview(reviewRequest, identifier);
         return Result.success(review);
     }
 
@@ -60,18 +61,11 @@ public class ReviewController {
 
             @RequestParam("images") List<MultipartFile> images
     ) {
-        List<String> imageUrls = new ArrayList<>();
-        if (images != null && !images.isEmpty()) {
-            for (MultipartFile image : images) {
-                try {
-                    String imageUrl = awsS3Service.uploadImage(image);
-                    imageUrls.add(imageUrl);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-        return  Result.success(imageUrls);
+        log.info("Starting image upload process with {} images.", images.size());
+        List<String> imageUrls = reviewService.postImage(images);  // 이미지 처리 로직을 서비스 계층으로 이동
+        log.info("이미지 업로드 프로세스 완료: 업로드된 이미지 URL {}", imageUrls);
+
+        return Result.success(imageUrls);
     }
     @PutMapping("/{reviewId}")
     @Operation(summary = "내 리뷰 수정", description = "내 리뷰를 수정합니다.")
@@ -80,23 +74,12 @@ public class ReviewController {
             @Schema(description = "리뷰 인덱스", example="1")
             @Valid
             @PathVariable Long reviewId,
-//            @RequestParam("images") Optional<List<MultipartFile>> images,
-//            @RequestParam("deleteImages") Optional<List<Long>> deleteImageIds,
             @RequestBody ReviewRequest reviewRequest,
-//            @RequestParam("newImages") Optional<List<MultipartFile>> newImages,
-            @RequestParam("deleteImageUrls") Optional<List<String>> deleteImageUrls,
             @Parameter(description = "유저 식별자", required = true, hidden = true)
             @AuthToken String identifier){
         ReviewResponse updatedReview = reviewService.updateReview(
                 reviewId, reviewRequest,
-//                newImages.orElse(new ArrayList<>()),
-                deleteImageUrls.orElse(new ArrayList<>()), identifier);
-//        ReviewResponse updatedReview = reviewService.updateReview(
-//                reviewId,
-//                reviewRequest,
-//                images.orElse(new ArrayList<>()),
-//                deleteImageIds.orElse(new ArrayList<>()),
-//                identifier
+                identifier);
 
         return Result.success(updatedReview);
     }
@@ -219,4 +202,22 @@ public class ReviewController {
         List<ReviewListResponse> topReviews = reviewService.findTopReviewsForMainPage(5);
         return Result.success(topReviews);
     }
+
+    // 내 게시글 목록 조회
+    /*@GetMapping("/my/list")
+    @Operation(summary = "내 리뷰 조회", description = "내가 작성한 리뷰를 조회합니다.")
+    @ApiResponse(responseCode = "200", description = "내 리뷰 조회 성공")
+    public Result<Page<ReviewListResponse>> searchMyReviewList(
+            @Parameter(description = "유저 식별자", required = true, hidden = true)
+            @AuthToken String identifier,
+            @Schema(description = "페이지 인덱스", example="0")
+            @RequestParam("page") int page,
+            @Schema(description = "한 페이지 당 보여질 리뷰 개수", example="10")
+            @RequestParam("pageSize") int pageSize
+    ){
+        Page<ReviewListResponse> myReviews = reviewService.searchMyReview(page, pageSize);
+        return Result.success(myReviews);
+    }
+
+     */
 }
