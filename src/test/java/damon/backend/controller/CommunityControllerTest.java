@@ -133,7 +133,7 @@ class CommunityControllerTest {
         form.setTitle("title");
         form.setContent("content");
         form.setType(CommunityType.자유);
-        form.setImages(null);
+        form.setImageUrls(null);
 
         Result<CommunityDetailDTO> result = communityController.addCommunity("1", form, bindingResult);
 

@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ public class Community extends BaseEntity {
     @Column(name = "views")
     private int views;
 
+    @Setter
     @ElementCollection
     @CollectionTable(name = "community_images", joinColumns = @JoinColumn(name = "community_id"))
     @Column(name = "community_image_path")

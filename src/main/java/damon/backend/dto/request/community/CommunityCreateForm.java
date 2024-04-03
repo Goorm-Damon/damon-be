@@ -18,5 +18,5 @@ public class CommunityCreateForm {
     @NotEmpty(message = "타입을 선택해주세요.")
     private CommunityType type;
 
-    private List<String> images;
+    private List<String> imageUrls;
 }

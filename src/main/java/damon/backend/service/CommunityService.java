@@ -93,9 +93,16 @@ public class CommunityService {
     }
 
     @Transactional
-    public CommunityDetailDTO setCommunity(Long communityId, String title, String content, List<String> images) {
+    public CommunityDetailDTO setCommunity(Long communityId, String title, String content, List<String> deleteImageUrls, List<String> addImageUrls) {
         Community community = getCommunityEntity(communityId);
-        community.setCommunity(title, content, images);
+
+        List<String> newImageUrls = community.getImages();
+        for (String imageUrl : deleteImageUrls) {
+            if (newImageUrls.contains(imageUrl)) newImageUrls.remove(imageUrl);
+        }
+        newImageUrls.addAll(addImageUrls);
+
+        community.setCommunity(title, content, newImageUrls);
         communityRepository.save(community);
         return new CommunityDetailDTO(community);
     }
@@ -110,7 +117,8 @@ public class CommunityService {
 
     @Transactional
     public void removeCommunity(Long communityId) {
-        communityRepository.delete(getCommunityEntity(communityId));
+        Community community = getCommunityEntity(communityId);
+        communityRepository.delete(community);
     }
 
     @Transactional

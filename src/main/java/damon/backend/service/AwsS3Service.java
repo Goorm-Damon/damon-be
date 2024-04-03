@@ -7,6 +7,7 @@ import damon.backend.util.Log;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -14,7 +15,6 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -115,6 +115,32 @@ public class AwsS3Service {
         } catch (Exception e) {
             Log.error("Error occurred while deleting object from S3: " + fileKey);
             throw e;
+        }
+    }
+
+    public List<String> upload(List<MultipartFile> images) {
+        List<String> imageUrls = new ArrayList<>();
+        if (images != null && !images.isEmpty()) {
+
+            for (MultipartFile file : images) {
+                try {
+                    String imageUrl = uploadImage(file, "community/");
+                    imageUrls.add(imageUrl);
+                } catch (IOException e) {
+                    throw new ImageCountExceededException();
+                } catch (MaxUploadSizeExceededException e) {
+                    throw new ImageSizeExceededException();
+                }
+            }
+        }
+        return imageUrls;
+    }
+
+    public void delete(List<String> imageUrls) {
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            for (String imageUrl : imageUrls) {
+                deleteImageByUrl(imageUrl);
+            }
         }
     }
 }

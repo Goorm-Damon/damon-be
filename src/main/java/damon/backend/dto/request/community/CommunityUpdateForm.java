@@ -18,5 +18,6 @@ public class CommunityUpdateForm {
     @NotEmpty(message = "내용을 입력해주세요.")
     private String content;
 
-    private List<String> images;
+    private List<String> deleteImageUrls;
+    private List<String> addImageUrls;
 }

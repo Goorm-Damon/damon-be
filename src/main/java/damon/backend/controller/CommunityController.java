@@ -5,20 +5,24 @@ import damon.backend.dto.request.community.*;
 import damon.backend.dto.response.community.CommunityCommentDTO;
 import damon.backend.dto.response.community.CommunityDetailDTO;
 import damon.backend.dto.response.community.CommunitySimpleDTO;
+import damon.backend.entity.ReviewImage;
 import damon.backend.enums.CommunityType;
 import damon.backend.exception.custom.InvalidFormException;
 import damon.backend.exception.custom.UnauthorizedException;
+import damon.backend.service.AwsS3Service;
 import damon.backend.service.CommunityService;
 import damon.backend.util.login.AuthToken;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -32,6 +36,7 @@ import java.util.List;
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class CommunityController {
 
+    private final AwsS3Service awsS3Service;
     private final CommunityService communityService;
 
     /**
@@ -123,6 +128,17 @@ public class CommunityController {
         return Result.success(communityDetail);
     }
 
+    @PostMapping("/upload")
+    @Operation(summary = "내 이미지 등록", description = "내 이미지를 등록합니다.")
+    @ApiResponse(responseCode = "200", description = "이미지 등록 성공")
+    public Result<List<String>> imageUpload(
+            @RequestParam("images") List<MultipartFile> images
+    ) {
+        List<String> imageUrls = awsS3Service.upload(images);
+
+        return Result.success(imageUrls);
+    }
+
     /**
      * 커뮤니티를 추가합니다.
      *
@@ -179,11 +195,15 @@ public class CommunityController {
             throw new UnauthorizedException();
         }
 
+        // 이미지 삭제 처리
+        awsS3Service.delete(updateForm.getDeleteImageUrls());
+
         CommunityDetailDTO updatedCommunity = communityService.setCommunity(
                 updateForm.getCommunityId(),
                 updateForm.getTitle(),
                 updateForm.getContent(),
-                updateForm.getImages()
+                updateForm.getDeleteImageUrls(),
+                updateForm.getAddImageUrls()
         );
         return Result.success(updatedCommunity);
     }
@@ -208,6 +228,8 @@ public class CommunityController {
             throw new UnauthorizedException();
         }
 
+        // 이미지 삭제 처리
+        awsS3Service.delete(communityService.getCommunity(communityId).getImages());
         communityService.removeCommunity(communityId);
         return Result.success(true);
     }
