@@ -5,11 +5,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
 @Entity
 @Getter
 @Setter
@@ -46,8 +41,9 @@ public class ReviewLike {
         ReviewLike reviewLike = new ReviewLike();
         reviewLike.setReview(review);
         reviewLike.setUser(user);
-        review.getReviewLikes().add(reviewLike);
-        user.getReviewLikes().add(reviewLike);
+        review.increaseLikeCount();
+//        review.getReviewLikes().add(reviewLike);
+  //      user.getReviewLikes().add(reviewLike);
         return reviewLike;
     }
 

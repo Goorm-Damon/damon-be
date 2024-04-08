@@ -199,7 +199,7 @@ public class ReviewController {
     @ApiResponse(responseCode = "200", description = "베스트 리뷰 조회 성공")
 
     public Result<List<ReviewListResponse>> getTopReviewsForMainPage() {
-        List<ReviewListResponse> topReviews = reviewService.findTopReviewsForMainPage(5);
+        List<ReviewListResponse> topReviews = reviewService.findTopReviewsForMainPage();
         return Result.success(topReviews);
     }
 

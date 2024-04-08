@@ -30,8 +30,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long>,ReviewRepo
     Optional<Review> findReviewWithCommentsAndRepliesByReviewId(@Param("id")Long id);
 
     // 좋아요 수가 많은 순으로 리뷰 조회
-    @Query("SELECT r FROM Review r ORDER BY r.likeCount DESC")
-    Page<Review> findTopReviewsByLikes(Pageable pageable);
+    @Query(value = "SELECT r FROM Review r ORDER BY r.likeCount DESC")
+    List<Review> findTopReviewsByLikes(Pageable pageable);
 
     // 내리뷰 조회
     @Query("SELECT r FROM Review r JOIN r.user u WHERE u.identifier = :identifier ORDER BY r.id DESC")

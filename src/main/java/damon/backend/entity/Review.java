@@ -73,7 +73,7 @@ public class Review extends BaseEntity {
         this.endDate = endDate;
         this.area = area;
         this.cost = cost;
-        this.suggests = new ArrayList<>(suggests);
+        this.suggests = suggests != null ? new ArrayList<>(suggests) : new ArrayList<>();
         this.content = content;
         // 태그 정보 처리
         this.tags.clear();

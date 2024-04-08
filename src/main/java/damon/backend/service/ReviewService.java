@@ -176,6 +176,7 @@ public class ReviewService {
     }
 
     // 삭제
+    @Transactional
     public void deleteReview(Long reviewId, String identifier) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(ReviewNotFoundException::new);
@@ -208,12 +209,11 @@ public class ReviewService {
             reviewLikeRepository.delete(like.get());
         } else {
             ReviewLike reviewLike = ReviewLike.createLike(review, user);
-            review.increaseLikeCount();
             reviewLikeRepository.save(reviewLike);
         }
     }
 
-    // 좋아요 누른 게시글 조회
+    // 내가 좋아요 누른 리뷰 조회
     @Transactional(readOnly = true)
     public Page<ReviewListResponse> searchLikedReviews(String identifier, int page, int pageSize) {
         User user = userRepository.findByIdentifier(identifier).orElseThrow(UserNotFoundException::new);
@@ -226,14 +226,13 @@ public class ReviewService {
 
     // 메인 페이지 베스트 리뷰 조회
     @Transactional(readOnly = true)
-    public List<ReviewListResponse> findTopReviewsForMainPage(int size) {
-        Pageable topFive = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "likeCount"));
-        Page<Review> reviews = reviewRepository.findAll(topFive); // findAll 메서드 사용 시 정렬 조건에 likeCount를 사용
-        return reviews.getContent()
-                .stream()
+    public List<ReviewListResponse> findTopReviewsForMainPage() {
+        List<Review> reviews = reviewRepository.findTopReviewsByLikes(PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "likeCount")));
+        return reviews.stream()
                 .map(ReviewListResponse::from)
                 .collect(Collectors.toList());
     }
+
 
     // 내 리뷰 조회
     @Transactional(readOnly = true)
