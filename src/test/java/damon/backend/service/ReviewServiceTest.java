@@ -96,7 +96,6 @@ class ReviewServiceTest {
         like1 = reviewLikeRepository.save(ReviewLike.createLike(review1, user1));
         like2 = reviewLikeRepository.save(ReviewLike.createLike(review2, user2));
 
-
         doNothing().when(awsS3Service).deleteImageByUrl(anyString());
     }
 

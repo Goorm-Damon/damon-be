@@ -23,7 +23,7 @@ public class ReviewCommentResponse {
     private String profileImage;
     private String state;
     private String createdDate;
-    private Long reviewId; // 대댓글일 경우에는 부모 댓글의 Id
+    private Long reviewId;
     private Long parentId;
     private String content;
 
